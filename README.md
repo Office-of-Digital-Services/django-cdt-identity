@@ -5,19 +5,21 @@
 | Name                                      |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
 |------------------------------------------ | -------: | -------: | -------: | -------: | ------: | --------: |
 | cdt\_identity/\_\_init\_\_.py             |        6 |        2 |        0 |        0 |     67% |       5-7 |
-| cdt\_identity/admin.py                    |        5 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/admin.py                    |        8 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/apps.py                     |        4 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/claims.py                   |       30 |        0 |       16 |        0 |    100% |           |
+| cdt\_identity/claims.py                   |       37 |        0 |       16 |        0 |    100% |           |
 | cdt\_identity/client.py                   |       24 |        0 |        6 |        0 |    100% |           |
-| cdt\_identity/migrations/0001\_initial.py |        6 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/migrations/0001\_initial.py |        5 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/migrations/\_\_init\_\_.py  |        0 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/models.py                   |       11 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/models/\_\_init\_\_.py      |        3 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/models/config.py            |        9 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/models/request.py           |       15 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/redirects.py                |       16 |        0 |        2 |        0 |    100% |           |
 | cdt\_identity/routes.py                   |       17 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/session.py                  |       82 |        0 |       10 |        0 |    100% |           |
+| cdt\_identity/session.py                  |       50 |        0 |       12 |        0 |    100% |           |
 | cdt\_identity/urls.py                     |       12 |        0 |        4 |        0 |    100% |           |
-| cdt\_identity/views.py                    |       91 |        0 |       26 |        0 |    100% |           |
-|                                 **TOTAL** |  **304** |    **2** |   **64** |    **0** | **99%** |           |
+| cdt\_identity/views.py                    |       87 |        0 |       28 |        0 |    100% |           |
+|                                 **TOTAL** |  **293** |    **2** |   **68** |    **0** | **99%** |           |
 
 
 ## Setup coverage badge
