@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 
 from . import redirects
-from .claims import Claims
+from .claims import ClaimsParser
 from .client import create_client
 from .client import oauth as registry
 from .routes import Routes
@@ -14,7 +14,7 @@ from .session import Session
 logger = logging.getLogger(__name__)
 
 
-def _client_or_error_redirect(request: HttpRequest):
+def _client_or_raise(request: HttpRequest):
     """Calls `cdt_identity.client.create_client()`.
 
     If a client is created successfully, return it; otherwise, raise an appropriate Exception.
@@ -22,25 +22,24 @@ def _client_or_error_redirect(request: HttpRequest):
     client = None
     session = Session(request)
 
-    config = session.oidc_config
+    config = session.client_config
     if not config:
-        raise Exception("No oauth_config in session")
+        raise Exception("No client config in session")
 
-    scheme = session.oidc_scheme
-    scopes = session.oidc_scopes
-    client = create_client(registry, config, scopes, scheme)
+    claims_request = session.claims_request
+    client = create_client(registry, config, claims_request)
     if not client:
-        raise Exception(f"oauth_client not registered: {config.client_name}")
+        raise Exception(f"Client not registered: {config.client_name}")
 
     return client
 
 
 def authorize(request: HttpRequest):
-    """View implementing OIDC token authorization."""
+    """View implementing OIDC token authorization with the CDT Identity Gateway."""
     logger.debug(Routes.route_authorize)
 
     session = Session(request)
-    client_result = _client_or_error_redirect(request)
+    client_result = _client_or_raise(request)
 
     if hasattr(client_result, "authorize_access_token"):
         # this looks like an oauth_client since it has the method we need
@@ -49,7 +48,7 @@ def authorize(request: HttpRequest):
         # this does not look like an oauth_client, it's an error redirect
         return client_result
 
-    logger.debug("Attempting to authorize OIDC access token")
+    logger.debug("Attempting to authorize access token")
     token = None
     exception = None
 
@@ -59,40 +58,36 @@ def authorize(request: HttpRequest):
         exception = ex
 
     if token is None and not exception:
-        logger.warning("Could not authorize OIDC access token")
+        logger.warning("Could not authorize access token")
         exception = Exception("authorize_access_token returned None")
 
     if exception:
         raise exception
 
-    logger.debug("OIDC access token authorized")
-
-    # Store the id_token in the user's session. This is the minimal amount of information needed later to log the user out.
-    session.oidc_token = token["id_token"]
+    logger.debug("Access token authorized")
 
     # Process the returned claims
-    processed_claims = []
-    expected_claims = [claim for claim in session.oidc_expected_claims.split(" ") if claim]
-    if expected_claims:
+    if session.claims_request.all_claims:
         userinfo = token.get("userinfo", {})
-        processed_claims = Claims(userinfo, expected_claims)
+        session.claims_result = ClaimsParser.parse(userinfo, session.claims_request.all_claims)
+
     # if we found the eligibility claim
-    eligibility_claim = session.oidc_eligibility_claims
-    if eligibility_claim and eligibility_claim in processed_claims:
-        # store and redirect to success
-        session.oidc_verified_claims = processed_claims.claims
-        return redirect(session.oidc_claims_authorize_success)
+    eligibility_claim = session.claims_request.eligibility_claim
+    if eligibility_claim and eligibility_claim in session.claims_result:
+        return redirect(session.claims_request.redirect_success)
+
     # else redirect to failure
-    if processed_claims and processed_claims.errors:
-        logger.error(processed_claims.errors)
-    return redirect(session.oidc_claims_authorize_fail)
+    if session.claims_result and session.claims_result.errors:
+        logger.error(session.claims_result.errors)
+
+    return redirect(session.claims_request.redirect_fail)
 
 
 def login(request: HttpRequest):
-    """View implementing OIDC authorize_redirect."""
+    """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)
 
-    oauth_client_result = _client_or_error_redirect(request)
+    oauth_client_result = _client_or_raise(request)
 
     if hasattr(oauth_client_result, "authorize_redirect"):
         # this looks like an oauth_client since it has the method we need
@@ -104,7 +99,7 @@ def login(request: HttpRequest):
     route = reverse(Routes.route_authorize)
     redirect_uri = redirects.generate_redirect_uri(request, route)
 
-    logger.debug(f"OAuth authorize_redirect with redirect_uri: {redirect_uri}")
+    logger.debug(f"authorize_redirect with redirect_uri: {redirect_uri}")
 
     exception = None
     result = None
@@ -126,11 +121,11 @@ def login(request: HttpRequest):
 
 
 def logout(request: HttpRequest):
-    """View handler for OIDC sign out."""
+    """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
     session = Session(request)
-    oauth_client_result = _client_or_error_redirect(request)
+    oauth_client_result = _client_or_raise(request)
 
     if hasattr(oauth_client_result, "load_server_metadata"):
         # this looks like an oauth_client since it has the method we need
@@ -140,16 +135,15 @@ def logout(request: HttpRequest):
         # this does not look like an oauth_client, it's an error redirect
         return oauth_client_result
 
-    # overwrite the session token, the user is signed out of the app
-    token = session.oidc_token
-    session.clear_oidc_token()
+    post_logout = Routes.route_post_logout
+    if session.claims_request and session.claims_request.redirect_post_logout:
+        post_logout = session.claims_request.redirect_post_logout
 
-    route = reverse(Routes.route_post_logout)
-    redirect_uri = redirects.generate_redirect_uri(request, route)
+    post_logout_route = reverse(post_logout)
+    post_logout_uri = redirects.generate_redirect_uri(request, post_logout_route)
 
-    logger.debug(f"OAuth end_session_endpoint with redirect_uri: {redirect_uri}")
+    logger.debug(f"end_session_endpoint with redirect_uri: {post_logout_uri}")
 
     # send the user through the end_session_endpoint, redirecting back to
-    # the post_logout route
-    return redirects.deauthorize_redirect(request, oauth_client, token, redirect_uri)
-    return redirects.deauthorize_redirect(request, oauth_client, token, redirect_uri)
+    # the post_logout URI
+    return redirects.deauthorize_redirect(request, oauth_client, post_logout_uri)

@@ -1,10 +1,10 @@
 import pytest
 
-from cdt_identity.claims import Claims
+from cdt_identity.claims import ClaimsResult, ClaimsParser
 
 
 @pytest.mark.parametrize(
-    "userinfo, expected_claims, claims, errors",
+    "userinfo,expected_claims,verified_claims,errors",
     [
         # numeric flags
         (
@@ -36,13 +36,14 @@ from cdt_identity.claims import Claims
         ),
     ],
 )
-def test_claims(userinfo, expected_claims, claims, errors):
-    obj = Claims(userinfo, expected_claims)
+def test_ClaimsParser_parse(userinfo, expected_claims, verified_claims, errors):
+    claims = ClaimsParser().parse(userinfo, expected_claims)
 
-    assert obj.claims == claims
-    assert obj.errors == errors
+    assert isinstance(claims, ClaimsResult)
+    assert claims.verified == verified_claims
+    assert claims.errors == errors
 
-    for key, value in claims.items():
-        assert obj[key] == value
-        assert obj.get(key) == value
-        assert key in obj
+    for key, value in verified_claims.items():
+        assert claims[key] == value
+        assert claims.get(key) == value
+        assert key in claims

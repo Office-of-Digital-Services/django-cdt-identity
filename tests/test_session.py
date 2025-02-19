@@ -1,7 +1,10 @@
+from uuid import uuid4
+
 import pytest
 from django.http import HttpRequest
 
-from cdt_identity.models import ClientConfig
+from cdt_identity.claims import ClaimsResult
+from cdt_identity.models import IdentityGatewayConfig, ClaimsVerificationRequest
 from cdt_identity.session import Session
 
 
@@ -13,77 +16,76 @@ def mock_request(mocker):
 
 
 @pytest.fixture
-def mock_config(mocker):
-    return mocker.MagicMock(spec=ClientConfig)
+def client_config():
+    client_config = IdentityGatewayConfig.objects.create(
+        client_name="name", client_id=uuid4(), authority="http://example.com", scheme="scheme"
+    )
+    yield client_config
+    client_config.delete()
+
+
+@pytest.fixture
+def claims_request():
+    request = ClaimsVerificationRequest.objects.create(id=123)
+    yield request
+    request.delete()
+
+
+@pytest.fixture
+def claims_result():
+    return ClaimsResult(verified=True)
 
 
 @pytest.mark.django_db
-def test_session_init(mock_request):
-    session = Session(mock_request, "auth:fail", "auth:success", "scopes", "scheme")
+def test_init(mock_request):
+    session = Session(mock_request)
     assert session.request == mock_request
     assert session.session == mock_request.session
-    assert session.oidc_authorize_fail == "auth:fail"
-    assert session.oidc_authorize_success == "auth:success"
-    assert session.oidc_scheme == "scheme"
-    assert session.oidc_scopes == "scopes"
+    assert session.client_config is None
+    assert session.claims_request is None
+    assert session.claims_result == ClaimsResult()
 
 
-def test_session_init_with_reset(mock_request):
-    s1 = Session(mock_request, "auth:fail", "auth:success", "scopes", "scheme")
-    s1.oidc_expected_claims = "claim1"
-    s1.oidc_eligibility_claims = "claim2"
-    s1.oidc_verified_claims = {"claim2": True}
-    s1.oidc_token = "test_token"
+@pytest.mark.django_db
+def test_init_with_args(mock_request, client_config, claims_request, claims_result):
+    session = Session(mock_request, client_config=client_config, claims_request=claims_request, claims_result=claims_result)
+    assert session.client_config == client_config
+    assert session.claims_request == claims_request
+    assert session.claims_result == claims_result
 
-    s2 = Session(mock_request, reset=True)
-
-    assert s1.oidc_scheme == s2.oidc_scheme == ""
-    assert s1.oidc_scopes == s2.oidc_scopes == ""
-    assert s1.oidc_expected_claims == s2.oidc_expected_claims == ""
-    assert s1.oidc_eligibility_claims == s2.oidc_eligibility_claims == ""
-    assert s1.has_oidc_token() is s2.has_oidc_token() is False
-    assert s1.has_oidc_verified_claims() is s2.has_oidc_verified_claims() is False
+    session = Session(mock_request, reset=True)
+    assert session.client_config is None
+    assert session.claims_request is None
+    assert session.claims_result == ClaimsResult()
 
 
-def test_session_property_string(mock_request):
+@pytest.mark.django_db
+def test_client(mock_request, client_config):
     session = Session(mock_request)
-    session.oidc_token = "test_token"
+    assert session.client_config is None
 
-    assert session.oidc_token == "test_token"
-    assert mock_request.session["oidc_token"] == "test_token"
+    session.client_config = client_config
+    assert session.session[session._keys_client] == client_config.id
+
+    session.client_config = None
+    assert session.session[session._keys_client] is None
 
 
-def test_session_config(mocker, mock_config, mock_request):
-    mock_config.id = "123"
-
+@pytest.mark.django_db
+def test_claims_request(mock_request, claims_request):
     session = Session(mock_request)
-    session.oidc_config = mock_config
-    assert mock_request.session["oidc_config"] == "123"
+    assert session.claims_request is None
 
-    mock_filter = mocker.patch.object(ClientConfig.objects, "filter")
-    mock_filter.return_value.first.return_value = mock_config
+    session.claims_request = claims_request
+    assert session.session[session._keys_request] == claims_request.id
 
-    assert session.oidc_config == mock_config
-    mock_filter.assert_called_once_with(id="123")
-
-
-def test_clear_oidc_token(mock_request):
-    session = Session(mock_request)
-    session.oidc_token = "test_token"
-    session.oidc_verified_claims = {"claim": "verified"}
-
-    session.clear_oidc_token()
-
-    assert session.oidc_token == ""
-    assert not session.has_oidc_token()
-
-    assert session.oidc_verified_claims == {}
-    assert not session.has_oidc_verified_claims()
+    session.claims_request = None
+    assert session.session[session._keys_request] is None
 
 
-def test_has_oidc_token(mock_request):
-    session = Session(mock_request)
-    assert not session.has_oidc_token()
+def test_has_verified_claims(mock_request, claims_result):
+    session = Session(mock_request, claims_result=claims_result)
+    assert session.has_verified_claims()
 
-    session.oidc_token = "test_token"
-    assert session.has_oidc_token()
+    session.claims_result = ClaimsResult()
+    assert not session.has_verified_claims()

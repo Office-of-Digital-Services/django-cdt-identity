@@ -1,133 +1,78 @@
+from dataclasses import asdict
+import logging
+
 from django.http import HttpRequest
 
-from .models import ClientConfig
+from .claims import ClaimsResult
+from .models import ClaimsVerificationRequest, IdentityGatewayConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 class Session:
 
+    _keys_client = "cdt_idg_client"
+    _keys_request = "cdt_idg_request"
+    _keys_result = "cdt_idg_result"
+
     def __init__(
         self,
         request: HttpRequest,
-        authorize_fail: str = None,
-        authorize_sucess: str = None,
-        scopes: str = None,
-        scheme: str = None,
         reset: bool = False,
+        client_config: IdentityGatewayConfig = None,
+        claims_request: ClaimsVerificationRequest = None,
+        claims_result: ClaimsResult = None,
     ):
-        """Initialize a new OIDC session wrapper for this request.
-
-        Args:
-            authorize_fail (str): A Django route string like `app:route` to redirect to upon authorization failure.
-
-            authorize_success (str): A Django route string like `app:route` to redirect to upon authorization success.
-
-            scopes (str): Additional scopes requested during login.
-
-            scheme (str): Override the scheme this OIDC connection uses.
-
-            reset (bool): True to reset this request's OIDC information.
-        """
+        """Initialize a new CDT Identity Gateway session wrapper for this request."""
 
         self.request = request
         self.session = request.session
 
         if reset:
-            self.oidc_eligibility_claims = ""
-            self.oidc_expected_claims = ""
-            self.oidc_scheme = ""
-            self.oidc_scopes = ""
-            self.clear_oidc_token()
-        if authorize_fail:
-            self.oidc_authorize_fail = authorize_fail
-        if authorize_sucess:
-            self.oidc_authorize_success = authorize_sucess
-        if scheme:
-            self.oidc_scheme = scheme
-        if scopes:
-            self.oidc_scopes = scopes
+            self.client_config = None
+            self.claims_request = None
+            self.claims_result = ClaimsResult()
+        if client_config:
+            self.client_config = client_config
+        if claims_request:
+            self.claims_request = claims_request
+        if claims_result:
+            self.claims_result = claims_result
 
     @property
-    def oidc_authorize_fail(self) -> str:
-        return self.session.get("oidc_authorize_fail", "")
+    def client_config(self) -> IdentityGatewayConfig:
+        val = self.session.get(self._keys_client)
+        return IdentityGatewayConfig.objects.filter(pk=val).first()
 
-    @oidc_authorize_fail.setter
-    def oidc_authorize_fail(self, value: str) -> None:
-        self.session["oidc_authorize_fail"] = value
-
-    @property
-    def oidc_authorize_success(self) -> str:
-        return self.session.get("oidc_authorize_success", "")
-
-    @oidc_authorize_success.setter
-    def oidc_authorize_success(self, value: str) -> None:
-        self.session["oidc_authorize_success"] = value
+    @client_config.setter
+    def client_config(self, value: IdentityGatewayConfig) -> None:
+        if value:
+            self.session[self._keys_client] = value.id
+        else:
+            self.session[self._keys_client] = None
 
     @property
-    def oidc_eligibility_claims(self) -> str:
-        return self.session.get("oidc_eligibility_claims", "")
+    def claims_request(self) -> ClaimsVerificationRequest:
+        val = self.session.get(self._keys_request)
+        return ClaimsVerificationRequest.objects.filter(pk=val).first()
 
-    @oidc_eligibility_claims.setter
-    def oidc_eligibility_claims(self, value: str) -> None:
-        self.session["oidc_eligibility_claims"] = value
-
-    @property
-    def oidc_expected_claims(self) -> str:
-        return self.session.get("oidc_expected_claims", "")
-
-    @oidc_expected_claims.setter
-    def oidc_expected_claims(self, value: str) -> None:
-        self.session["oidc_expected_claims"] = value
+    @claims_request.setter
+    def claims_request(self, value: ClaimsVerificationRequest) -> None:
+        if value:
+            self.session[self._keys_request] = value.id
+        else:
+            self.session[self._keys_request] = None
 
     @property
-    def oidc_verified_claims(self) -> dict:
-        return self.session.get("oidc_verified_claims", {})
+    def claims_result(self) -> ClaimsResult:
+        val = self.session.get(self._keys_result, {})
+        return ClaimsResult(**val)
 
-    @oidc_verified_claims.setter
-    def oidc_verified_claims(self, value: dict) -> None:
-        self.session["oidc_verified_claims"] = value
+    @claims_result.setter
+    def claims_result(self, value: ClaimsResult) -> None:
+        self.session[self._keys_result] = asdict(value)
 
-    @property
-    def oidc_config(self) -> ClientConfig:
-        val = self.session.get("oidc_config")
-        return ClientConfig.objects.filter(id=val).first()
-
-    @oidc_config.setter
-    def oidc_config(self, value: ClientConfig) -> None:
-        self.session["oidc_config"] = value.id
-
-    @property
-    def oidc_scheme(self) -> str:
-        return self.session.get("oidc_scheme", "")
-
-    @oidc_scheme.setter
-    def oidc_scheme(self, value: str) -> None:
-        self.session["oidc_scheme"] = value
-
-    @property
-    def oidc_scopes(self) -> str:
-        return self.session.get("oidc_scopes", "")
-
-    @oidc_scopes.setter
-    def oidc_scopes(self, value: str) -> None:
-        self.session["oidc_scopes"] = value
-
-    @property
-    def oidc_token(self) -> str:
-        return self.session.get("oidc_token", "")
-
-    @oidc_token.setter
-    def oidc_token(self, value: str) -> None:
-        self.session["oidc_token"] = value
-
-    def clear_oidc_token(self):
-        """Reset the session claims and token."""
-        self.oidc_token = ""
-        self.oidc_verified_claims = {}
-
-    def has_oidc_token(self):
-        """Return True if this session has an OIDC token. False otherwise."""
-        return bool(self.oidc_token)
-
-    def has_oidc_verified_claims(self):
+    def has_verified_claims(self):
         """Return True if this session has verified claims. False otherwise."""
-        return bool(self.oidc_verified_claims)
+        return bool(self.claims_result) and bool(self.claims_result.verified)

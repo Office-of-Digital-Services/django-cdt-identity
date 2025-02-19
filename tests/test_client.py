@@ -1,7 +1,7 @@
 import pytest
 
 from cdt_identity.client import _authorize_params, _client_kwargs, _server_metadata_url, create_client
-from cdt_identity.models import ClientConfig
+from cdt_identity.models import IdentityGatewayConfig, ClaimsVerificationRequest
 
 
 def test_client_kwargs():
@@ -41,7 +41,7 @@ def test_authorize_params(scheme, expected):
 
 @pytest.mark.django_db
 def test_create_client_registered(mocker, mock_oauth_registry):
-    mock_config = mocker.Mock(spec=ClientConfig)
+    mock_config = mocker.Mock(spec=IdentityGatewayConfig)
     mock_config.client_name = "client_name_1"
     mock_config.client_id = "client_id_1"
 
@@ -53,9 +53,11 @@ def test_create_client_registered(mocker, mock_oauth_registry):
 
 @pytest.mark.django_db
 def test_create_client_not_registered(mocker, mock_oauth_registry):
-    mock_config = mocker.Mock(spec=ClientConfig)
-    mock_config.client_name = "client_name_1"
-    mock_config.client_id = "client_id_1"
+    mock_client = mocker.Mock(spec=IdentityGatewayConfig)
+    mock_client.client_name = "client_name_1"
+    mock_client.client_id = "client_id_1"
+
+    mock_request = mocker.Mock(spec=ClaimsVerificationRequest)
 
     mocker.patch("cdt_identity.client._client_kwargs", return_value={"client": "kwargs"})
     mocker.patch("cdt_identity.client._server_metadata_url", return_value="https://metadata.url")
@@ -63,7 +65,7 @@ def test_create_client_not_registered(mocker, mock_oauth_registry):
 
     mock_oauth_registry.create_client.return_value = None
 
-    create_client(mock_oauth_registry, mock_config, "scopes")
+    create_client(mock_oauth_registry, mock_client, mock_request)
 
     mock_oauth_registry.create_client.assert_any_call("client_name_1")
     mock_oauth_registry.register.assert_any_call(

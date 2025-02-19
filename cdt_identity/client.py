@@ -1,12 +1,8 @@
-"""
-The oauth application: helpers for working with OAuth clients.
-"""
-
 import logging
 
 from authlib.integrations.django_client import OAuth
 
-from cdt_identity.models import ClientConfig
+from .models import IdentityGatewayConfig, ClaimsVerificationRequest
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +40,7 @@ def _authorize_params(scheme):
     return params
 
 
-def create_client(oauth_registry: OAuth, config: ClientConfig, scopes: str, scheme: str = ""):
+def create_client(oauth_registry: OAuth, config: IdentityGatewayConfig, request: ClaimsVerificationRequest):
     """
     Returns an OAuth client, registering first if needed.
     """
@@ -58,8 +54,8 @@ def create_client(oauth_registry: OAuth, config: ClientConfig, scopes: str, sche
             config.client_name,
             client_id=config.client_id,
             server_metadata_url=_server_metadata_url(config.authority),
-            client_kwargs=_client_kwargs(scopes),
-            authorize_params=_authorize_params(scheme or config.scheme),
+            client_kwargs=_client_kwargs(request.scopes),
+            authorize_params=_authorize_params(request.scheme or config.scheme),
         )
 
     return client

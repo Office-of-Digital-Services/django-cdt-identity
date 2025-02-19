@@ -1,8 +1,13 @@
 from django.contrib import admin
 
-from . import models
+from .models import IdentityGatewayConfig, ClaimsVerificationRequest
 
 
-@admin.register(models.ClientConfig)
-class ClientConfigAdmin(admin.ModelAdmin):
+@admin.register(IdentityGatewayConfig)
+class IdentityGatewayConfigAdmin(admin.ModelAdmin):
     list_display = ("client_name", "authority", "scheme")
+
+
+@admin.register(ClaimsVerificationRequest)
+class ClaimsVerificationRequestAdmin(admin.ModelAdmin):
+    list_display = ("scopes", "eligibility_claim", "extra_claims", "scheme", "redirect_fail", "redirect_success")
