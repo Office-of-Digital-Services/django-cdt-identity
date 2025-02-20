@@ -6,8 +6,8 @@ from django.urls import reverse
 
 from . import redirects
 from .claims import ClaimsParser
-from .client import create_client
-from .client import oauth as registry
+from .client import create_client, oauth as registry
+from .hooks import DefaultHooks
 from .routes import Routes
 from .session import Session
 
@@ -34,7 +34,7 @@ def _client_or_raise(request: HttpRequest):
     return client
 
 
-def authorize(request: HttpRequest):
+def authorize(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC token authorization with the CDT Identity Gateway."""
     logger.debug(Routes.route_authorize)
 
@@ -83,7 +83,7 @@ def authorize(request: HttpRequest):
     return redirect(session.claims_request.redirect_fail)
 
 
-def login(request: HttpRequest):
+def login(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)
 
@@ -120,7 +120,7 @@ def login(request: HttpRequest):
     return result
 
 
-def logout(request: HttpRequest):
+def logout(request: HttpRequest, hooks=DefaultHooks):
     """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
