@@ -113,23 +113,25 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     logger.debug(f"authorize_redirect with redirect_uri: {redirect_uri}")
 
     exception = None
-    result = None
+    response = None
 
     try:
         hooks.pre_login(request)
-        result = oauth_client.authorize_redirect(request, redirect_uri)
+        response = oauth_client.authorize_redirect(request, redirect_uri)
     except Exception as ex:
         exception = ex
 
-    if result and result.status_code >= 400:
-        exception = Exception(f"authorize_redirect error response [{result.status_code}]: {result.content.decode()}")
-    elif result is None and exception is None:
+    if response and response.status_code >= 400:
+        exception = Exception(f"authorize_redirect error response [{response.status_code}]: {response.content.decode()}")
+    elif response is None and exception is None:
         exception = Exception("authorize_redirect returned None")
 
     if exception:
         raise exception
 
-    return result
+    response = hooks.post_login(request, response)
+
+    return response
 
 
 def logout(request: HttpRequest, hooks=DefaultHooks):
