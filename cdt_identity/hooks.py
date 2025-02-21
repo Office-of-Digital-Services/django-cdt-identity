@@ -1,7 +1,7 @@
 import functools
 import logging
 
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 
 
 logger = logging.getLogger(__name__)
@@ -64,3 +64,23 @@ class DefaultHooks:
             request (HttpRequest): The incoming Django request object.
         """
         pass
+
+    @classmethod
+    @log_hook_call
+    def post_login(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+        """
+        Hook method that runs after a successful login with the Identity Gateway.
+
+        Default behavior:
+        - No operation is performed; returns the HttpResponse unchanged.
+
+        Consumers can override this method to perform additional processing on the response.
+
+        Args:
+            request (HttpRequest): The Django request object.
+            response (HttpResponse): The HttpResponse produced by the login view.
+
+        Returns:
+            HttpResponse: The potentially modified response.
+        """
+        return response
