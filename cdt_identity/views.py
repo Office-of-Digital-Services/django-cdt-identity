@@ -116,6 +116,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     result = None
 
     try:
+        hooks.pre_login(request)
         result = oauth_client.authorize_redirect(request, redirect_uri)
     except Exception as ex:
         exception = ex
