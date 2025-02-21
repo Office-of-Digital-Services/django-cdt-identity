@@ -1,6 +1,8 @@
 import functools
 import logging
 
+from django.http import HttpRequest
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,4 +49,18 @@ class DefaultHooks:
         ```
     """
 
-    pass
+    @classmethod
+    @log_hook_call
+    def pre_login(cls, request: HttpRequest) -> None:
+        """
+        Hook method that runs before initiating login with the Identity Gateway.
+
+        Default Behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic before login.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+        """
+        pass
