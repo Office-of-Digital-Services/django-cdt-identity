@@ -7,13 +7,13 @@ from .routes import Routes
 app_name = "cdt"
 
 endpoints_template = [
-    Routes.cancel,
     Routes.post_logout,
     Routes.verify_fail,
     Routes.verify_success,
 ]
 endpoints_view = [
     Routes.authorize,
+    Routes.cancel,
     Routes.login,
     Routes.logout,
 ]

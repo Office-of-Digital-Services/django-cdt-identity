@@ -7,7 +7,7 @@ from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
-from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, login, logout
+from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, cancel, login, logout
 
 
 @pytest.fixture
@@ -190,6 +190,29 @@ def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, m
 
     mock_redirect.assert_called_once_with("/fail")
     assert mock_session.claims_result == ClaimsResult(errors={"claim2": 10})
+
+
+@pytest.mark.django_db
+def test_cancel_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
+    mock_session.claims_request = mocker.Mock(redirect_fail="/fail")
+    mock_redirect_response = HttpResponse("redirect")
+    mock_redirect.return_value = mock_redirect_response
+
+    response = cancel(mock_request)
+
+    mock_redirect.assert_called_once_with("/fail")
+    assert response == mock_redirect_response
+
+
+@pytest.mark.django_db
+def test_cancel_without_claims_request(mock_request, mock_session, mock_redirect):
+    mock_session.claims_request = None
+
+    response = cancel(mock_request)
+
+    mock_redirect.assert_not_called()
+    assert response.status_code == 200
+    assert response.content.decode("utf-8") == "Login was cancelled"
 
 
 @pytest.mark.django_db
