@@ -193,6 +193,17 @@ def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, m
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("mock_session")
+def test_cancel_hooks(mock_request, mock_hooks, mock_redirect):
+    mock_redirect_response = HttpResponse("redirect")
+    mock_redirect.return_value = mock_redirect_response
+
+    cancel(mock_request, mock_hooks)
+
+    mock_hooks.cancel_login.assert_called_once_with(mock_request, mock_redirect_response)
+
+
+@pytest.mark.django_db
 def test_cancel_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
     mock_session.claims_request = mocker.Mock(redirect_fail="/fail")
     mock_redirect_response = HttpResponse("redirect")

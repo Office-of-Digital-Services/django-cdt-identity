@@ -105,6 +105,8 @@ def cancel(request, hooks=DefaultHooks):
     else:
         response = HttpResponse("Login was cancelled", content_type="text/plain")
 
+    response = hooks.cancel_login(request, response)
+
     return response
 
 
