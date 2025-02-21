@@ -26,6 +26,11 @@ def mock_client_or_raise(mocker, mock_oauth_client):
     return mocker.patch("cdt_identity.views._client_or_raise", return_value=mock_oauth_client)
 
 
+@pytest.fixture
+def mock_redirect(mocker):
+    return mocker.patch("cdt_identity.views.redirect")
+
+
 @pytest.mark.django_db
 def test_client_or_raise_no_config(mock_request, mock_create_client):
     with pytest.raises(Exception, match="No client config in session"):
@@ -53,7 +58,7 @@ def test_client_or_raise_client(mock_request):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session):
+def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
         "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
@@ -61,7 +66,6 @@ def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session
     mock_session.claims_request = mocker.Mock(
         all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_success="/success"
     )
-    mock_redirect = mocker.patch("cdt_identity.views.redirect")
 
     authorize(mock_request)
 
@@ -99,7 +103,7 @@ def test_authorize_token_exception(mock_oauth_client, mock_request):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_session):
+def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
         "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
@@ -108,7 +112,6 @@ def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_sessi
     # we can mock this result because it is the default for a real session
     # since we have a Mock instance, we need to apply the default directly
     mock_session.claims_result = ClaimsResult()
-    mock_redirect = mocker.patch("cdt_identity.views.redirect")
 
     authorize(mock_request)
 
@@ -117,13 +120,12 @@ def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_sessi
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_authorize_no_extra_claims(mocker, mock_oauth_client, mock_request, mock_session):
+def test_authorize_no_extra_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
         "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
     }
     mock_session.claims_request = mocker.Mock(all_claims=["claim4"], eligibility_claim="claim4", redirect_fail="/fail")
-    mock_redirect = mocker.patch("cdt_identity.views.redirect")
 
     authorize(mock_request)
 
@@ -133,7 +135,7 @@ def test_authorize_no_extra_claims(mocker, mock_oauth_client, mock_request, mock
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock_session):
+def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
         "userinfo": {},
@@ -141,7 +143,6 @@ def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock
     mock_session.claims_request = mocker.Mock(
         all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_fail="/fail"
     )
-    mock_redirect = mocker.patch("cdt_identity.views.redirect")
 
     authorize(mock_request)
 
@@ -151,7 +152,7 @@ def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, mock_session):
+def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
         "userinfo": {"claim1": 5, "claim2": 10, "claim3": 100},
@@ -159,7 +160,6 @@ def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, m
     mock_session.claims_request = mocker.Mock(
         all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_fail="/fail"
     )
-    mock_redirect = mocker.patch("cdt_identity.views.redirect")
 
     authorize(mock_request)
 
