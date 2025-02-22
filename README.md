@@ -15,12 +15,11 @@
 | cdt\_identity/models/\_\_init\_\_.py      |        3 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models/config.py            |        9 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models/request.py           |       15 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/redirects.py                |       16 |        0 |        2 |        0 |    100% |           |
 | cdt\_identity/routes.py                   |       17 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/session.py                  |       50 |        0 |       12 |        0 |    100% |           |
 | cdt\_identity/urls.py                     |       12 |        0 |        4 |        0 |    100% |           |
-| cdt\_identity/views.py                    |       87 |        0 |       28 |        0 |    100% |           |
-|                                 **TOTAL** |  **295** |    **2** |   **68** |    **0** | **99%** |           |
+| cdt\_identity/views.py                    |       97 |        0 |       30 |        1 |     99% |  149->152 |
+|                                 **TOTAL** |  **289** |    **2** |   **68** |    **1** | **99%** |           |
 
 
 ## Setup coverage badge
