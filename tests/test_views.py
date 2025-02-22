@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from cdt_identity.claims import ClaimsResult
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
-from cdt_identity.views import _client_or_raise, authorize, login, logout
+from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, login, logout
 
 
 @pytest.fixture
@@ -54,6 +54,25 @@ def test_client_or_raise_client(mock_request):
     result = _client_or_raise(mock_request)
 
     assert hasattr(result, "authorize_redirect")
+
+
+@pytest.mark.django_db
+def test_generate_redirect_uri_default(mock_request):
+    path = "/test"
+
+    redirect_uri = _generate_redirect_uri(mock_request, path)
+
+    assert redirect_uri == "https://testserver/test"
+
+
+def test_generate_redirect_uri_localhost(rf, settings):
+    settings.ALLOWED_HOSTS.append("localhost")
+    request = rf.get("/oauth/login", SERVER_NAME="localhost")
+    path = "/test"
+
+    redirect_uri = _generate_redirect_uri(request, path)
+
+    assert redirect_uri == "http://localhost/test"
 
 
 @pytest.mark.django_db
@@ -226,23 +245,18 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-# the "/post_logout" case represents a consuming app's customization of this route
-# the None case represents this app's default
-@pytest.mark.parametrize("post_logout_redirect", ("/post_logout", None))
-def test_logout(mocker, mock_request, mock_session, post_logout_redirect):
-    mock_redirects = mocker.patch("cdt_identity.views.redirects")
-    mock_redirects.deauthorize_redirect.return_value = HttpResponse(status=200)
-    mock_session.claims_request.redirect_post_logout = post_logout_redirect
-    mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="deauthorize")
+def test_logout(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
+    mock_oauth_client.client_id = "test-client-id"
+    mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
+    mock_session.claims_request.redirect_post_logout = "custom:post_logout"
+    mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="/logged-out")
 
-    response = logout(mock_request)
+    logout(mock_request)
 
-    assert response.status_code == 200
-    mock_redirects.deauthorize_redirect.assert_called_once()
-    if post_logout_redirect:
-        mock_reverse.assert_called_once_with(post_logout_redirect)
-    else:
-        mock_reverse.assert_called_once_with(Routes.route_post_logout)
+    mock_reverse.assert_called_once_with("custom:post_logout")
+    mock_redirect.assert_called_once_with(
+        "https://server/endsession?client_id=test-client-id&post_logout_redirect_uri=https%3A%2F%2Ftestserver%2Flogged-out"
+    )
 
 
 @pytest.mark.django_db

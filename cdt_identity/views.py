@@ -3,8 +3,8 @@ import logging
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import urlencode
 
-from . import redirects
 from .claims import ClaimsParser
 from .client import create_client, oauth as registry
 from .hooks import DefaultHooks
@@ -32,6 +32,17 @@ def _client_or_raise(request: HttpRequest):
         raise Exception(f"Client not registered: {config.client_name}")
 
     return client
+
+
+def _generate_redirect_uri(request: HttpRequest, redirect_path: str):
+    redirect_uri = str(request.build_absolute_uri(redirect_path)).lower()
+
+    # this is a temporary hack to ensure redirect URIs are HTTPS when the app is deployed
+    # see https://github.com/cal-itp/benefits/issues/442 for more context
+    if not redirect_uri.startswith("http://localhost"):
+        redirect_uri = redirect_uri.replace("http://", "https://")
+
+    return redirect_uri
 
 
 def authorize(request: HttpRequest, hooks=DefaultHooks):
@@ -97,7 +108,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         return oauth_client_result
 
     route = reverse(Routes.route_authorize)
-    redirect_uri = redirects.generate_redirect_uri(request, route)
+    redirect_uri = _generate_redirect_uri(request, route)
 
     logger.debug(f"authorize_redirect with redirect_uri: {redirect_uri}")
 
@@ -129,21 +140,31 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
 
     if hasattr(oauth_client_result, "load_server_metadata"):
         # this looks like an oauth_client since it has the method we need
-        # (called in redirects.deauthorize_redirect)
         oauth_client = oauth_client_result
     else:
         # this does not look like an oauth_client, it's an error redirect
         return oauth_client_result
 
-    post_logout = Routes.route_post_logout
+    route = Routes.route_post_logout
     if session.claims_request and session.claims_request.redirect_post_logout:
-        post_logout = session.claims_request.redirect_post_logout
+        route = session.claims_request.redirect_post_logout
 
-    post_logout_route = reverse(post_logout)
-    post_logout_uri = redirects.generate_redirect_uri(request, post_logout_route)
+    route = reverse(route)
+    post_logout_uri = _generate_redirect_uri(request, route)
 
     logger.debug(f"end_session_endpoint with redirect_uri: {post_logout_uri}")
 
-    # send the user through the end_session_endpoint, redirecting back to
-    # the post_logout URI
-    return redirects.deauthorize_redirect(request, oauth_client, post_logout_uri)
+    # Authlib has not yet implemented `end_session_endpoint` as the OIDC Session Management 1.0 spec is still in draft
+    # See https://github.com/lepture/authlib/issues/331#issuecomment-827295954 for more
+    #
+    # The implementation here was adapted from the same ticket: https://github.com/lepture/authlib/issues/331#issue-838728145
+    #
+    # Send the user through the end_session_endpoint, redirecting back to the post_logout URI
+    metadata = oauth_client.load_server_metadata()
+    end_session_endpoint = metadata.get("end_session_endpoint")
+
+    params = dict(client_id=oauth_client.client_id, post_logout_redirect_uri=post_logout_uri)
+    encoded_params = urlencode(params)
+    end_session_url = f"{end_session_endpoint}?{encoded_params}"
+
+    return redirect(end_session_url)
