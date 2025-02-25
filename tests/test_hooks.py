@@ -26,6 +26,7 @@ def test_log_hook_call_decorator_logs_debug(caplog):
         (DefaultHooks.pre_login, (HttpRequest(),)),
         (DefaultHooks.post_login, (HttpRequest(), HttpResponse())),
         (DefaultHooks.cancel_login, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.pre_logout, (HttpRequest(),)),
         (DefaultHooks.post_logout, (HttpRequest(), HttpResponse())),
     ],
 )

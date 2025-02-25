@@ -107,6 +107,22 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
+    def pre_logout(cls, request: HttpRequest) -> None:
+        """
+        Hook method that runs before initiating logout with the Identity Gateway.
+
+        Default behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic before logout.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+        """
+        pass
+
+    @classmethod
+    @log_hook_call
     def post_logout(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
         """Hook method that runs when logout with the Identity Gateway is complete.
 
