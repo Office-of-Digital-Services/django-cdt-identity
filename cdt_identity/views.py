@@ -163,6 +163,8 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
         # this does not look like an oauth_client, it's an error redirect
         return oauth_client_result
 
+    hooks.pre_logout(request)
+
     route = reverse(Routes.route_post_logout)
     post_logout_uri = _generate_redirect_uri(request, route)
     logger.debug(f"end_session_endpoint with redirect_uri: {post_logout_uri}")
