@@ -7,7 +7,6 @@ from .routes import Routes
 app_name = "cdt"
 
 endpoints_template = [
-    Routes.post_logout,
     Routes.verify_fail,
     Routes.verify_success,
 ]
@@ -16,6 +15,7 @@ endpoints_view = [
     Routes.cancel,
     Routes.login,
     Routes.logout,
+    Routes.post_logout,
 ]
 
 urlpatterns = []

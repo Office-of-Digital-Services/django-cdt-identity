@@ -187,3 +187,17 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     end_session_url = f"{end_session_endpoint}?{encoded_params}"
 
     return redirect(end_session_url)
+
+
+def post_logout(request: HttpRequest, hooks=DefaultHooks):
+    """View implementing logout completion."""
+    logger.debug(Routes.route_post_logout)
+
+    session = Session(request)
+
+    if session.claims_request and session.claims_request.redirect_post_logout:
+        response = redirect(session.claims_request.redirect_post_logout)
+    else:
+        response = HttpResponse("Logout complete", content_type="text/plain")
+
+    return response

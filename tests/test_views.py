@@ -7,7 +7,7 @@ from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
-from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, cancel, login, logout
+from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, cancel, login, logout, post_logout
 
 
 @pytest.fixture
@@ -334,3 +334,26 @@ def test_logout_default_redirect(mocker, mock_client_or_raise, mock_request, moc
     response = logout(mock_request)
 
     assert response == error_redirect
+
+
+@pytest.mark.django_db
+def test_post_logout_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
+    mock_session.claims_request = mocker.Mock(redirect_post_logout="/done")
+    mock_redirect_response = HttpResponse("redirect")
+    mock_redirect.return_value = mock_redirect_response
+
+    response = post_logout(mock_request)
+
+    mock_redirect.assert_called_once_with("/done")
+    assert response == mock_redirect_response
+
+
+@pytest.mark.django_db
+def test_post_logout_without_claims_request(mock_request, mock_session, mock_redirect):
+    mock_session.claims_request = None
+
+    response = post_logout(mock_request)
+
+    mock_redirect.assert_not_called()
+    assert response.status_code == 200
+    assert response.content.decode("utf-8") == "Logout complete"
