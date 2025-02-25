@@ -4,6 +4,7 @@ import pytest
 from django.http import HttpResponse
 
 from cdt_identity.claims import ClaimsResult
+from cdt_identity.hooks import DefaultHooks
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
 from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, login, logout
@@ -24,6 +25,11 @@ def mock_create_client(mocker, mock_oauth_client):
 @pytest.fixture
 def mock_client_or_raise(mocker, mock_oauth_client):
     return mocker.patch("cdt_identity.views._client_or_raise", return_value=mock_oauth_client)
+
+
+@pytest.fixture
+def mock_hooks(mocker):
+    return mocker.MagicMock(spec=DefaultHooks)
 
 
 @pytest.fixture
@@ -184,6 +190,16 @@ def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, m
 
     mock_redirect.assert_called_once_with("/fail")
     assert mock_session.claims_result == ClaimsResult(errors={"claim2": 10})
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_or_raise")
+def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
+    mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
+
+    login(mock_request, mock_hooks)
+
+    mock_hooks.pre_login.assert_called_once_with(mock_request)
 
 
 @pytest.mark.django_db
