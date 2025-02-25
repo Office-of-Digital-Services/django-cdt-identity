@@ -200,4 +200,6 @@ def post_logout(request: HttpRequest, hooks=DefaultHooks):
     else:
         response = HttpResponse("Logout complete", content_type="text/plain")
 
+    response = hooks.post_logout(request, response)
+
     return response

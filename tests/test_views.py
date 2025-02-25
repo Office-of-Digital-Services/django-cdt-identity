@@ -337,6 +337,17 @@ def test_logout_default_redirect(mocker, mock_client_or_raise, mock_request, moc
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("mock_session")
+def test_post_logout_hooks(mock_request, mock_hooks, mock_redirect):
+    mock_redirect_response = HttpResponse("redirect")
+    mock_redirect.return_value = mock_redirect_response
+
+    post_logout(mock_request, mock_hooks)
+
+    mock_hooks.post_logout.assert_called_once_with(mock_request, mock_redirect_response)
+
+
+@pytest.mark.django_db
 def test_post_logout_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
     mock_session.claims_request = mocker.Mock(redirect_post_logout="/done")
     mock_redirect_response = HttpResponse("redirect")
