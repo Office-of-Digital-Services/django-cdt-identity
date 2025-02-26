@@ -95,6 +95,7 @@ def test_authorize_hooks(mocker, mock_oauth_client, mock_request, mock_session, 
     authorize(mock_request, mock_hooks)
 
     mock_hooks.pre_authorize.assert_called_once_with(mock_request)
+    mock_hooks.post_authorize.assert_called_once_with(mock_request)
 
 
 @pytest.mark.django_db

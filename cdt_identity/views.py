@@ -77,6 +77,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     if exception:
         raise exception
 
+    hooks.post_authorize(request)
     logger.debug("Access token authorized")
 
     # Process the returned claims
