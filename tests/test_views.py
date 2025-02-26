@@ -83,6 +83,22 @@ def test_generate_redirect_uri_localhost(rf, settings):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
+def test_authorize_hooks(mocker, mock_oauth_client, mock_request, mock_session, mock_hooks):
+    mock_oauth_client.authorize_access_token.return_value = {
+        "id_token": "test_token",
+        "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
+    }
+    mock_session.claims_request = mocker.Mock(
+        all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_success="/success"
+    )
+
+    authorize(mock_request, mock_hooks)
+
+    mock_hooks.pre_authorize.assert_called_once_with(mock_request)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_or_raise")
 def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
