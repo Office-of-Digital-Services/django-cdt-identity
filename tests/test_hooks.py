@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 import pytest
 
 from cdt_identity.hooks import log_hook_call, DefaultHooks
+from cdt_identity.models import ClaimsVerificationRequest
 
 
 @log_hook_call
@@ -28,6 +29,7 @@ def test_log_hook_call_decorator_logs_debug(caplog):
         (DefaultHooks.cancel_login, (HttpRequest(), HttpResponse())),
         (DefaultHooks.pre_authorize, (HttpRequest(),)),
         (DefaultHooks.post_authorize, (HttpRequest(),)),
+        (DefaultHooks.pre_claims_verification, (HttpRequest(), ClaimsVerificationRequest())),
         (DefaultHooks.pre_logout, (HttpRequest(),)),
         (DefaultHooks.post_logout, (HttpRequest(), HttpResponse())),
     ],
