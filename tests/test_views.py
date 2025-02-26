@@ -299,15 +299,14 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
-def test_logout(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
+def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
     mock_oauth_client.client_id = "test-client-id"
     mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
-    mock_session.claims_request.redirect_post_logout = "custom:post_logout"
     mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="/logged-out")
 
     logout(mock_request)
 
-    mock_reverse.assert_called_once_with("custom:post_logout")
+    mock_reverse.assert_called_once_with("cdt:post_logout")
     mock_redirect.assert_called_once_with(
         "https://server/endsession?client_id=test-client-id&post_logout_redirect_uri=https%3A%2F%2Ftestserver%2Flogged-out"
     )

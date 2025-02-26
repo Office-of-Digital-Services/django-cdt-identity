@@ -154,7 +154,6 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
-    session = Session(request)
     oauth_client_result = _client_or_raise(request)
 
     if hasattr(oauth_client_result, "load_server_metadata"):
@@ -164,13 +163,8 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
         # this does not look like an oauth_client, it's an error redirect
         return oauth_client_result
 
-    route = Routes.route_post_logout
-    if session.claims_request and session.claims_request.redirect_post_logout:
-        route = session.claims_request.redirect_post_logout
-
-    route = reverse(route)
+    route = reverse(Routes.route_post_logout)
     post_logout_uri = _generate_redirect_uri(request, route)
-
     logger.debug(f"end_session_endpoint with redirect_uri: {post_logout_uri}")
 
     # Authlib has not yet implemented `end_session_endpoint` as the OIDC Session Management 1.0 spec is still in draft
