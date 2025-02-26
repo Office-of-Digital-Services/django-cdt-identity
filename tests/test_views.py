@@ -195,11 +195,15 @@ def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, m
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
 def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
-    mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
+    response = HttpResponse(status=200)
+    mock_oauth_client.authorize_redirect.return_value = response
+    mock_hooks.post_login.return_value = response
 
-    login(mock_request, mock_hooks)
+    result = login(mock_request, mock_hooks)
 
+    assert result == response
     mock_hooks.pre_login.assert_called_once_with(mock_request)
+    mock_hooks.post_login.assert_called_once_with(mock_request, response)
 
 
 @pytest.mark.django_db
