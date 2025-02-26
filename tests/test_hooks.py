@@ -25,6 +25,7 @@ def test_log_hook_call_decorator_logs_debug(caplog):
     [
         (DefaultHooks.pre_login, (HttpRequest(),)),
         (DefaultHooks.post_login, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.cancel_login, (HttpRequest(), HttpResponse())),
     ],
 )
 def test_hook_logging(caplog, hook_func, args):
@@ -41,5 +42,13 @@ def test_post_login():
     request, response = HttpRequest(), HttpResponse()
 
     result = DefaultHooks.post_login(request, response)
+
+    assert result == response
+
+
+def test_cancel_login():
+    request, response = HttpRequest(), HttpResponse()
+
+    result = DefaultHooks.cancel_login(request, response)
 
     assert result == response

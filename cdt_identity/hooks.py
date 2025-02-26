@@ -84,3 +84,23 @@ class DefaultHooks:
             HttpResponse: The potentially modified response.
         """
         return response
+
+    @classmethod
+    @log_hook_call
+    def cancel_login(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+        """
+        Hook method that runs when login with the Identity Gateway is canceled by the user.
+
+        Default behavior:
+        - No operation is performed; returns the HttpResponse unchanged.
+
+        Consumers can override this method to execute custom logic on cancel.
+
+        Args:
+            request (HttpRequest): The Django request object.
+            response (HttpResponse): The HttpResponse produced by the cancel view.
+
+        Returns:
+            HttpResponse: The potentially modified response.
+        """
+        return response

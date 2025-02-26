@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -92,6 +92,22 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         logger.error(session.claims_result.errors)
 
     return redirect(session.claims_request.redirect_fail)
+
+
+def cancel(request, hooks=DefaultHooks):
+    """View implementing login cancellation."""
+    logger.debug(Routes.route_cancel)
+
+    session = Session(request)
+
+    if session.claims_request and session.claims_request.redirect_fail:
+        response = redirect(session.claims_request.redirect_fail)
+    else:
+        response = HttpResponse("Login was cancelled", content_type="text/plain")
+
+    response = hooks.cancel_login(request, response)
+
+    return response
 
 
 def login(request: HttpRequest, hooks=DefaultHooks):
