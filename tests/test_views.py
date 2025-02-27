@@ -121,31 +121,34 @@ def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session
 
 
 @pytest.mark.django_db
-def test_authorize_no_client(mocker, mock_client_or_error, mock_request):
-    error_redirect = mocker.Mock(spec=[])
-    mock_client_or_error.return_value = error_redirect
+def test_authorize_no_client(mock_client_or_error, mock_request, mock_hooks):
+    mock_client_or_error.return_value = {}
 
-    response = authorize(mock_request)
+    response = authorize(mock_request, mock_hooks)
 
-    assert response == error_redirect
+    assert response == {}
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_no_token(mock_oauth_client, mock_request):
+def test_authorize_no_token(mock_oauth_client, mock_request, mock_hooks):
     mock_oauth_client.authorize_access_token.return_value = None
 
-    with pytest.raises(Exception, match="authorize_access_token returned None"):
-        authorize(mock_request)
+    response = authorize(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once()
+    assert response == mock_hooks.system_error.return_value
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_token_exception(mock_oauth_client, mock_request):
-    mock_oauth_client.authorize_access_token.side_effect = Exception("authorize token failed")
+def test_authorize_token_exception(mock_oauth_client, mock_request, mock_hooks):
+    exception = Exception("authorize token failed")
+    mock_oauth_client.authorize_access_token.side_effect = exception
 
-    with pytest.raises(Exception, match="authorize token failed"):
-        authorize(mock_request)
+    authorize(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
 
 
 @pytest.mark.django_db

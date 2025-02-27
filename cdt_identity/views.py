@@ -80,7 +80,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_access_token returned None")
 
     if exception:
-        raise exception
+        return hooks.system_error(request, exception)
 
     hooks.post_authorize(request)
     logger.debug("Access token authorized")
