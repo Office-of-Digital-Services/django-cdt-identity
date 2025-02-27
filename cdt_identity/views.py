@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from .claims import ClaimsParser
+from .claims import ClaimsParser, ClaimsResult
 from .client import create_client, oauth as registry
 from .hooks import DefaultHooks
 from .routes import Routes
@@ -81,20 +81,23 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     logger.debug("Access token authorized")
 
     claims_request = session.claims_request
+    claims_result = ClaimsResult()
     hooks.pre_claims_verification(request, claims_request)
 
     # Process the returned claims
     if claims_request and claims_request.all_claims:
         userinfo = token.get("userinfo", {})
-        session.claims_result = ClaimsParser.parse(userinfo, claims_request.all_claims)
+        claims_result = ClaimsParser.parse(userinfo, claims_request.all_claims)
+        session.claims_result = claims_result
+        hooks.post_claims_verification(request, claims_request, claims_result)
 
     # if we found the eligibility claim
-    if claims_request and claims_request.eligibility_claim and claims_request.eligibility_claim in session.claims_result:
+    if claims_request and claims_request.eligibility_claim and claims_request.eligibility_claim in claims_result:
         return redirect(claims_request.redirect_success)
 
     # else redirect to failure
-    if session.claims_result and session.claims_result.errors:
-        logger.error(session.claims_result.errors)
+    if claims_result.errors:
+        logger.error(claims_result.errors)
 
     return redirect(claims_request.redirect_fail)
 
