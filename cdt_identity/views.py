@@ -59,7 +59,9 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         # this does not look like an oauth_client, it's an error redirect
         return client_result
 
+    hooks.pre_authorize(request)
     logger.debug("Attempting to authorize access token")
+
     token = None
     exception = None
 
@@ -75,6 +77,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     if exception:
         raise exception
 
+    hooks.post_authorize(request)
     logger.debug("Access token authorized")
 
     # Process the returned claims

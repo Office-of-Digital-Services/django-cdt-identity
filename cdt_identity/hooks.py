@@ -107,6 +107,38 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
+    def pre_authorize(cls, request: HttpRequest) -> None:
+        """
+        Hook method that runs before attempting token authorization with the Identity Gateway.
+
+        Default Behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic before authorization.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+        """
+        pass
+
+    @classmethod
+    @log_hook_call
+    def post_authorize(cls, request: HttpRequest) -> None:
+        """
+        Hook method that runs after token authorization with the Identity Gateway.
+
+        Default Behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic after authorization.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+        """
+        pass
+
+    @classmethod
+    @log_hook_call
     def pre_logout(cls, request: HttpRequest) -> None:
         """
         Hook method that runs before initiating logout with the Identity Gateway.
