@@ -188,9 +188,13 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     # The implementation here was adapted from the same ticket: https://github.com/lepture/authlib/issues/331#issue-838728145
     #
     # Send the user through the end_session_endpoint, redirecting back to the post_logout URI
-    metadata = oauth_client.load_server_metadata()
-    end_session_endpoint = metadata.get("end_session_endpoint")
+    metadata = {}
+    try:
+        metadata = oauth_client.load_server_metadata()
+    except Exception as exception:
+        return hooks.system_error(request, exception)
 
+    end_session_endpoint = metadata.get("end_session_endpoint")
     params = dict(client_id=oauth_client.client_id, post_logout_redirect_uri=post_logout_uri)
     encoded_params = urlencode(params)
     end_session_url = f"{end_session_endpoint}?{encoded_params}"

@@ -372,6 +372,18 @@ def test_logout_default_redirect(mocker, mock_client_or_error, mock_request, moc
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_or_error")
+def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, mock_hooks):
+    mock_oauth_client.client_id = "test-client-id"
+    exception = Exception("metadata")
+    mock_oauth_client.load_server_metadata.side_effect = exception
+
+    logout(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+
+
+@pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
 def test_post_logout_hooks(mock_request, mock_hooks, mock_redirect):
     mock_redirect_response = HttpResponse("redirect")
