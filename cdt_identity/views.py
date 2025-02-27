@@ -14,7 +14,7 @@ from .session import Session
 logger = logging.getLogger(__name__)
 
 
-def _client_or_error(request: HttpRequest):
+def _client_or_error(request: HttpRequest, hooks=DefaultHooks):
     """Calls `cdt_identity.client.create_client()`.
 
     If a client is created successfully, return it; otherwise, return a system error response.
@@ -34,7 +34,7 @@ def _client_or_error(request: HttpRequest):
             exception = Exception(f"Client not registered: {config.client_name}")
 
     if exception:
-        raise exception
+        return hooks.system_error(request, exception)
     else:
         return client
 
@@ -55,7 +55,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     logger.debug(Routes.route_authorize)
 
     session = Session(request)
-    client_result = _client_or_error(request)
+    client_result = _client_or_error(request, hooks)
 
     if hasattr(client_result, "authorize_access_token"):
         # this looks like an oauth_client since it has the method we need
@@ -127,14 +127,14 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)
 
-    oauth_client_result = _client_or_error(request)
+    client_result = _client_or_error(request, hooks)
 
-    if hasattr(oauth_client_result, "authorize_redirect"):
+    if hasattr(client_result, "authorize_redirect"):
         # this looks like an oauth_client since it has the method we need
-        oauth_client = oauth_client_result
+        oauth_client = client_result
     else:
         # this does not look like an oauth_client, it's an error redirect
-        return oauth_client_result
+        return client_result
 
     route = reverse(Routes.route_authorize)
     redirect_uri = _generate_redirect_uri(request, route)
@@ -167,14 +167,14 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
-    oauth_client_result = _client_or_error(request)
+    client_result = _client_or_error(request, hooks)
 
-    if hasattr(oauth_client_result, "load_server_metadata"):
+    if hasattr(client_result, "load_server_metadata"):
         # this looks like an oauth_client since it has the method we need
-        oauth_client = oauth_client_result
+        oauth_client = client_result
     else:
         # this does not look like an oauth_client, it's an error redirect
-        return oauth_client_result
+        return client_result
 
     hooks.pre_logout(request)
 

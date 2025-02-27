@@ -39,10 +39,11 @@ def mock_redirect(mocker):
 
 @pytest.mark.django_db
 def test_client_or_error_no_config(mock_request, mock_create_client):
-    with pytest.raises(Exception, match="No client config in session"):
-        _client_or_error(mock_request)
+    response = _client_or_error(mock_request)
 
     mock_create_client.assert_not_called()
+    assert response.status_code == 500
+    assert response.content.decode() == "A system error occurred."
 
 
 @pytest.mark.django_db
@@ -50,8 +51,10 @@ def test_client_or_error_no_config(mock_request, mock_create_client):
 def test_client_or_error_no_client(mock_create_client, mock_request):
     mock_create_client.return_value = None
 
-    with pytest.raises(Exception, match="Client not registered"):
-        _client_or_error(mock_request)
+    response = _client_or_error(mock_request)
+
+    assert response.status_code == 500
+    assert response.content.decode() == "A system error occurred."
 
 
 @pytest.mark.django_db
