@@ -314,6 +314,16 @@ def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_raise")
+def test_logout_hooks(mock_oauth_client, mock_request, mock_hooks):
+    mock_oauth_client.client_id = "test-client-id"
+    mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
+
+    logout(mock_request, mock_hooks)
+
+    mock_hooks.pre_logout.assert_called_once_with(mock_request)
+
+
+@pytest.mark.django_db
 def test_logout_no_client(mocker, mock_client_or_raise, mock_request):
     error_redirect = mocker.Mock(spec=[])
     mock_client_or_raise.return_value = error_redirect
@@ -324,7 +334,6 @@ def test_logout_no_client(mocker, mock_client_or_raise, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
 def test_logout_default_redirect(mocker, mock_client_or_raise, mock_request, mock_session):
     mock_session.claims_request = None
     error_redirect = mocker.Mock(spec=[])
