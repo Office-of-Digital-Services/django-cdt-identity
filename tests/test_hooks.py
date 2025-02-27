@@ -34,6 +34,7 @@ def test_log_hook_call_decorator_logs_debug(caplog):
         (DefaultHooks.post_claims_verification, (HttpRequest(), ClaimsVerificationRequest(), ClaimsResult())),
         (DefaultHooks.pre_logout, (HttpRequest(),)),
         (DefaultHooks.post_logout, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.system_error, (HttpRequest(), Exception())),
     ],
 )
 def test_hook_logging(caplog, hook_func, args):
@@ -68,3 +69,15 @@ def test_post_logout():
     result = DefaultHooks.post_logout(request, response)
 
     assert result == response
+
+
+def test_system_error(caplog):
+    request, exception = HttpRequest(), Exception("Exception occurred.")
+
+    with caplog.at_level(logging.ERROR):
+        response = DefaultHooks.system_error(request, exception)
+
+    assert response.status_code == 500
+    assert response.content.decode("utf-8") == "A system error occurred."
+    assert any("A system error occurred." in record.message for record in caplog.records)
+    assert any("Exception occurred." in record.exc_text for record in caplog.records)
