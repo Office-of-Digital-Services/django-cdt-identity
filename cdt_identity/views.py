@@ -14,24 +14,29 @@ from .session import Session
 logger = logging.getLogger(__name__)
 
 
-def _client_or_raise(request: HttpRequest):
+def _client_or_error(request: HttpRequest):
     """Calls `cdt_identity.client.create_client()`.
 
-    If a client is created successfully, return it; otherwise, raise an appropriate Exception.
+    If a client is created successfully, return it; otherwise, return a system error response.
     """
     client = None
+    exception = None
     session = Session(request)
 
     config = session.client_config
     if not config:
-        raise Exception("No client config in session")
+        exception = Exception("No client config in session")
 
-    claims_request = session.claims_request
-    client = create_client(registry, config, claims_request)
-    if not client:
-        raise Exception(f"Client not registered: {config.client_name}")
+    if not exception:
+        claims_request = session.claims_request
+        client = create_client(registry, config, claims_request)
+        if not client:
+            exception = Exception(f"Client not registered: {config.client_name}")
 
-    return client
+    if exception:
+        raise exception
+    else:
+        return client
 
 
 def _generate_redirect_uri(request: HttpRequest, redirect_path: str):
@@ -50,7 +55,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     logger.debug(Routes.route_authorize)
 
     session = Session(request)
-    client_result = _client_or_raise(request)
+    client_result = _client_or_error(request)
 
     if hasattr(client_result, "authorize_access_token"):
         # this looks like an oauth_client since it has the method we need
@@ -122,7 +127,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)
 
-    oauth_client_result = _client_or_raise(request)
+    oauth_client_result = _client_or_error(request)
 
     if hasattr(oauth_client_result, "authorize_redirect"):
         # this looks like an oauth_client since it has the method we need
@@ -162,7 +167,7 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
-    oauth_client_result = _client_or_raise(request)
+    oauth_client_result = _client_or_error(request)
 
     if hasattr(oauth_client_result, "load_server_metadata"):
         # this looks like an oauth_client since it has the method we need

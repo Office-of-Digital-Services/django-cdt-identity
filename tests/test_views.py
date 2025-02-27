@@ -7,7 +7,7 @@ from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
-from cdt_identity.views import _client_or_raise, _generate_redirect_uri, authorize, cancel, login, logout, post_logout
+from cdt_identity.views import _client_or_error, _generate_redirect_uri, authorize, cancel, login, logout, post_logout
 
 
 @pytest.fixture
@@ -23,8 +23,8 @@ def mock_create_client(mocker, mock_oauth_client):
 
 
 @pytest.fixture
-def mock_client_or_raise(mocker, mock_oauth_client):
-    return mocker.patch("cdt_identity.views._client_or_raise", return_value=mock_oauth_client)
+def mock_client_or_error(mocker, mock_oauth_client):
+    return mocker.patch("cdt_identity.views._client_or_error", return_value=mock_oauth_client)
 
 
 @pytest.fixture
@@ -38,26 +38,26 @@ def mock_redirect(mocker):
 
 
 @pytest.mark.django_db
-def test_client_or_raise_no_config(mock_request, mock_create_client):
+def test_client_or_error_no_config(mock_request, mock_create_client):
     with pytest.raises(Exception, match="No client config in session"):
-        _client_or_raise(mock_request)
+        _client_or_error(mock_request)
 
     mock_create_client.assert_not_called()
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
-def test_client_or_raise_no_client(mock_create_client, mock_request):
+def test_client_or_error_no_client(mock_create_client, mock_request):
     mock_create_client.return_value = None
 
     with pytest.raises(Exception, match="Client not registered"):
-        _client_or_raise(mock_request)
+        _client_or_error(mock_request)
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_create_client", "mock_session")
-def test_client_or_raise_client(mock_request):
-    result = _client_or_raise(mock_request)
+def test_client_or_error_client(mock_request):
+    result = _client_or_error(mock_request)
 
     assert hasattr(result, "authorize_redirect")
 
@@ -82,7 +82,7 @@ def test_generate_redirect_uri_localhost(rf, settings):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_hooks(mocker, mock_oauth_client, mock_request, mock_session, mock_hooks):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -101,7 +101,7 @@ def test_authorize_hooks(mocker, mock_oauth_client, mock_request, mock_session, 
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -118,9 +118,9 @@ def test_authorize_success(mocker, mock_oauth_client, mock_request, mock_session
 
 
 @pytest.mark.django_db
-def test_authorize_no_client(mocker, mock_client_or_raise, mock_request):
+def test_authorize_no_client(mocker, mock_client_or_error, mock_request):
     error_redirect = mocker.Mock(spec=[])
-    mock_client_or_raise.return_value = error_redirect
+    mock_client_or_error.return_value = error_redirect
 
     response = authorize(mock_request)
 
@@ -128,7 +128,7 @@ def test_authorize_no_client(mocker, mock_client_or_raise, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_no_token(mock_oauth_client, mock_request):
     mock_oauth_client.authorize_access_token.return_value = None
 
@@ -137,7 +137,7 @@ def test_authorize_no_token(mock_oauth_client, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_token_exception(mock_oauth_client, mock_request):
     mock_oauth_client.authorize_access_token.side_effect = Exception("authorize token failed")
 
@@ -146,7 +146,7 @@ def test_authorize_token_exception(mock_oauth_client, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -163,7 +163,7 @@ def test_authorize_no_claims(mocker, mock_oauth_client, mock_request, mock_sessi
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_no_extra_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -178,7 +178,7 @@ def test_authorize_no_extra_claims(mocker, mock_oauth_client, mock_request, mock
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -195,7 +195,7 @@ def test_authorize_no_token_claims(mocker, mock_oauth_client, mock_request, mock
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_token_error_claims(mocker, mock_oauth_client, mock_request, mock_session, mock_redirect):
     mock_oauth_client.authorize_access_token.return_value = {
         "id_token": "test_token",
@@ -246,7 +246,7 @@ def test_cancel_without_claims_request(mock_request, mock_session, mock_redirect
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
     response = HttpResponse(status=200)
     mock_oauth_client.authorize_redirect.return_value = response
@@ -260,7 +260,7 @@ def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_login_success(mocker, mock_oauth_client, mock_request):
     mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
     mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="authorize")
@@ -272,7 +272,7 @@ def test_login_success(mocker, mock_oauth_client, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_login_failure(mock_oauth_client, mock_request):
     mock_oauth_client.authorize_redirect.return_value = None
 
@@ -281,9 +281,9 @@ def test_login_failure(mock_oauth_client, mock_request):
 
 
 @pytest.mark.django_db
-def test_login_no_client(mocker, mock_client_or_raise, mock_request):
+def test_login_no_client(mocker, mock_client_or_error, mock_request):
     error_redirect = mocker.Mock(spec=[])
-    mock_client_or_raise.return_value = error_redirect
+    mock_client_or_error.return_value = error_redirect
 
     response = login(mock_request)
 
@@ -291,7 +291,7 @@ def test_login_no_client(mocker, mock_client_or_raise, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_login_authorize_redirect_exception(mock_oauth_client, mock_request):
     mock_oauth_client.authorize_redirect.side_effect = Exception("authorize_redirect")
 
@@ -300,7 +300,7 @@ def test_login_authorize_redirect_exception(mock_oauth_client, mock_request):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 @pytest.mark.parametrize(
     "status_code, content",
     [
@@ -317,7 +317,7 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
     mock_oauth_client.client_id = "test-client-id"
     mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
@@ -332,7 +332,7 @@ def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_raise")
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_logout_hooks(mock_oauth_client, mock_request, mock_hooks):
     mock_oauth_client.client_id = "test-client-id"
     mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
@@ -343,9 +343,9 @@ def test_logout_hooks(mock_oauth_client, mock_request, mock_hooks):
 
 
 @pytest.mark.django_db
-def test_logout_no_client(mocker, mock_client_or_raise, mock_request):
+def test_logout_no_client(mocker, mock_client_or_error, mock_request):
     error_redirect = mocker.Mock(spec=[])
-    mock_client_or_raise.return_value = error_redirect
+    mock_client_or_error.return_value = error_redirect
 
     response = logout(mock_request)
 
@@ -353,10 +353,10 @@ def test_logout_no_client(mocker, mock_client_or_raise, mock_request):
 
 
 @pytest.mark.django_db
-def test_logout_default_redirect(mocker, mock_client_or_raise, mock_request, mock_session):
+def test_logout_default_redirect(mocker, mock_client_or_error, mock_request, mock_session):
     mock_session.claims_request = None
     error_redirect = mocker.Mock(spec=[])
-    mock_client_or_raise.return_value = error_redirect
+    mock_client_or_error.return_value = error_redirect
 
     response = logout(mock_request)
 
