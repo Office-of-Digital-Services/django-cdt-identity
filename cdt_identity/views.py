@@ -156,7 +156,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_redirect returned None")
 
     if exception:
-        raise exception
+        return hooks.system_error(request, exception)
 
     response = hooks.post_login(request, response)
 

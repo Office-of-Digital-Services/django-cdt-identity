@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from django.http import HttpResponse
 
@@ -279,11 +277,12 @@ def test_login_success(mocker, mock_oauth_client, mock_request):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_login_failure(mock_oauth_client, mock_request):
+def test_login_failure(mock_oauth_client, mock_request, mock_hooks):
     mock_oauth_client.authorize_redirect.return_value = None
 
-    with pytest.raises(Exception):
-        login(mock_request)
+    login(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -298,11 +297,13 @@ def test_login_no_client(mocker, mock_client_or_error, mock_request):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_login_authorize_redirect_exception(mock_oauth_client, mock_request):
-    mock_oauth_client.authorize_redirect.side_effect = Exception("authorize_redirect")
+def test_login_authorize_redirect_exception(mock_oauth_client, mock_request, mock_hooks):
+    exception = Exception("authorize_redirect")
+    mock_oauth_client.authorize_redirect.side_effect = exception
 
-    with pytest.raises(Exception, match="authorize_redirect"):
-        login(mock_request)
+    login(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
 
 
 @pytest.mark.django_db
@@ -315,11 +316,12 @@ def test_login_authorize_redirect_exception(mock_oauth_client, mock_request):
         (500, "server error"),
     ],
 )
-def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request, status_code, content):
+def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request, mock_hooks, status_code, content):
     mock_oauth_client.authorize_redirect.return_value = HttpResponse(content=content, status=status_code)
 
-    with pytest.raises(Exception, match=re.escape(f"authorize_redirect error response [{status_code}]: {content}")):
-        login(mock_request)
+    login(mock_request, mock_hooks)
+
+    mock_hooks.system_error.assert_called_once()
 
 
 @pytest.mark.django_db
