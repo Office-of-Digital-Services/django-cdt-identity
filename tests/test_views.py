@@ -56,6 +56,15 @@ def make_claims_request(mocker):
     return _make_request
 
 
+@pytest.fixture
+def make_claims_response():
+    def _make_response(token="test_token", claims={"claim1": "1", "claim2": "value", "claim3": "value"}):
+        """Create a mock claims response with common patterns."""
+        return {"id_token": token, "userinfo": claims}
+
+    return _make_response
+
+
 @pytest.mark.django_db
 def test_client_or_error_no_config(mock_request, mock_create_client):
     response = _client_or_error(mock_request)
@@ -105,11 +114,8 @@ def test_generate_redirect_uri_localhost(rf, settings):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_hooks(mock_oauth_client, mock_request, mock_session, mock_hooks, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
-    }
+def test_authorize_hooks(mock_oauth_client, mock_request, mock_session, mock_hooks, make_claims_request, make_claims_response):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response()
     mock_claims_request = make_claims_request()
     mock_session.claims_request = mock_claims_request
     expected_claims_result = ClaimsResult(verified=dict(claim1=True, claim2="value"))
@@ -124,11 +130,10 @@ def test_authorize_hooks(mock_oauth_client, mock_request, mock_session, mock_hoo
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_success(mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
-    }
+def test_authorize_success(
+    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response()
     mock_session.claims_request = make_claims_request()
 
     authorize(mock_request)
@@ -170,11 +175,10 @@ def test_authorize_token_exception(mock_oauth_client, mock_request, mock_hooks):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_no_claims(mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
-    }
+def test_authorize_no_claims(
+    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response()
 
     # Empty all_claims list to test no claims scenario
     mock_session.claims_request = make_claims_request(all_claims=[], redirect_fail="/fail")
@@ -189,11 +193,10 @@ def test_authorize_no_claims(mock_oauth_client, mock_request, mock_session, mock
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_no_extra_claims(mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
-    }
+def test_authorize_no_extra_claims(
+    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response()
     mock_session.claims_request = make_claims_request(all_claims=["claim4"], eligibility_claim="claim4")
 
     authorize(mock_request)
@@ -204,11 +207,10 @@ def test_authorize_no_extra_claims(mock_oauth_client, mock_request, mock_session
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_no_token_claims(mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {},
-    }
+def test_authorize_no_token_claims(
+    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response(claims={})
     mock_session.claims_request = make_claims_request()
 
     authorize(mock_request)
@@ -219,11 +221,12 @@ def test_authorize_no_token_claims(mock_oauth_client, mock_request, mock_session
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_authorize_token_error_claims(mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request):
-    mock_oauth_client.authorize_access_token.return_value = {
-        "id_token": "test_token",
-        "userinfo": {"claim1": 5, "claim2": 10, "claim3": 100},
-    }
+def test_authorize_token_error_claims(
+    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+):
+    mock_oauth_client.authorize_access_token.return_value = make_claims_response(
+        claims={"claim1": 5, "claim2": 10, "claim3": 100}
+    )
     mock_session.claims_request = make_claims_request()
 
     authorize(mock_request)
