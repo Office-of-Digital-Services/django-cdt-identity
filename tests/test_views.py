@@ -88,14 +88,16 @@ def test_authorize_hooks(mocker, mock_oauth_client, mock_request, mock_session, 
         "id_token": "test_token",
         "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
     }
-    mock_session.claims_request = mocker.Mock(
-        all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_success="/success"
-    )
+    mock_claims_request = mocker.Mock(all_claims=["claim1", "claim2"], eligibility_claim="claim1", redirect_success="/success")
+    mock_session.claims_request = mock_claims_request
+    expected_claims_result = ClaimsResult(verified=dict(claim1=True, claim2="value"))
 
     authorize(mock_request, mock_hooks)
 
     mock_hooks.pre_authorize.assert_called_once_with(mock_request)
     mock_hooks.post_authorize.assert_called_once_with(mock_request)
+    mock_hooks.pre_claims_verification.assert_called_once_with(mock_request, mock_claims_request)
+    mock_hooks.post_claims_verification.assert_called_once_with(mock_request, mock_claims_request, expected_claims_result)
 
 
 @pytest.mark.django_db

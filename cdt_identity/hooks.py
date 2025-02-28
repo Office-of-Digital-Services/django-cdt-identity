@@ -3,6 +3,8 @@ import logging
 
 from django.http import HttpRequest, HttpResponse
 
+from cdt_identity import claims, models
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +136,43 @@ class DefaultHooks:
 
         Args:
             request (HttpRequest): The incoming Django request object.
+        """
+        pass
+
+    @classmethod
+    @log_hook_call
+    def pre_claims_verification(cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest) -> None:
+        """
+        Hook method that runs before initiating claims verification of the Identity Gateway's response.
+
+        Default Behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic before claims verification.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+            claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
+        """
+        pass
+
+    @classmethod
+    @log_hook_call
+    def post_claims_verification(
+        cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest, claims_result: claims.ClaimsResult
+    ) -> None:
+        """
+        Hook method that runs after claims verification of the Identity Gateway's response.
+
+        Default Behavior:
+        - No operation is performed.
+
+        Consumers can override this method to execute custom logic after claims verification.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+            claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
+            claims_result (ClaimsResult): The result of claims verification.
         """
         pass
 
