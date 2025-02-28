@@ -28,6 +28,11 @@ def log_hook_call(hook_func):
     return wrapper
 
 
+def text_response(content: str) -> HttpResponse:
+    """Create an HttpResponse with content_type=text/plain."""
+    return HttpResponse(content, content_type="text/plain")
+
+
 class DefaultHooks:
     """Default hooks implementation.
 
@@ -158,14 +163,14 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_claims_verification(
+    def claims_verified_eligible(
         cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest, claims_result: claims.ClaimsResult
-    ) -> None:
+    ) -> HttpResponse:
         """
-        Hook method that runs after claims verification of the Identity Gateway's response.
+        Hook method that runs on successful eligibility verification of the Identity Gateway's response.
 
         Default Behavior:
-        - No operation is performed.
+        - An `HttpResponse` is generated, indicating successful eligibility verification.
 
         Consumers can override this method to execute custom logic after claims verification.
 
@@ -173,8 +178,34 @@ class DefaultHooks:
             request (HttpRequest): The incoming Django request object.
             claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
             claims_result (ClaimsResult): The result of claims verification.
+
+        Returns:
+            response (HttpResponse): An appropriate response to eligibility being verified.
         """
-        pass
+        return text_response("Claims were verified for eligibility.")
+
+    @classmethod
+    @log_hook_call
+    def claims_verified_not_eligible(
+        cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest, claims_result: claims.ClaimsResult
+    ) -> HttpResponse:
+        """
+        Hook method that runs on unsuccessful eligibility verification of the Identity Gateway's response.
+
+        Default Behavior:
+        - An `HttpResponse` is generated, indicating an unsuccessful eligibility verification.
+
+        Consumers can override this method to execute custom logic after claims verification.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+            claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
+            claims_result (ClaimsResult): The result of claims verification.
+
+        Returns:
+            response (HttpResponse): An appropriate response to eligibility not being verified.
+        """
+        return text_response("Claims were not verified for eligibility.")
 
     @classmethod
     @log_hook_call

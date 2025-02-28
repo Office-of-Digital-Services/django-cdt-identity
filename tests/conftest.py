@@ -35,3 +35,19 @@ def mock_request(rf):
 
     request.session.save()
     return request
+
+
+@pytest.fixture
+def assert_response():
+    def _assert_response(response, *, status_code=200, content=None, redirect_path=None):
+        """Assert common response patterns in tests."""
+        if status_code is not None:
+            assert response.status_code == status_code
+
+        if content is not None:
+            assert response.content.decode() == content
+
+        if redirect_path is not None:
+            assert response["Location"] == redirect_path
+
+    return _assert_response
