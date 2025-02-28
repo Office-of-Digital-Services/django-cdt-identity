@@ -14,24 +14,29 @@ from .session import Session
 logger = logging.getLogger(__name__)
 
 
-def _client_or_raise(request: HttpRequest):
+def _client_or_error(request: HttpRequest, hooks=DefaultHooks):
     """Calls `cdt_identity.client.create_client()`.
 
-    If a client is created successfully, return it; otherwise, raise an appropriate Exception.
+    If a client is created successfully, return it; otherwise, return a system error response.
     """
     client = None
+    exception = None
     session = Session(request)
 
     config = session.client_config
     if not config:
-        raise Exception("No client config in session")
+        exception = Exception("No client config in session")
 
-    claims_request = session.claims_request
-    client = create_client(registry, config, claims_request)
-    if not client:
-        raise Exception(f"Client not registered: {config.client_name}")
+    if not exception:
+        claims_request = session.claims_request
+        client = create_client(registry, config, claims_request)
+        if not client:
+            exception = Exception(f"Client not registered: {config.client_name}")
 
-    return client
+    if exception:
+        return hooks.system_error(request, exception)
+    else:
+        return client
 
 
 def _generate_redirect_uri(request: HttpRequest, redirect_path: str):
@@ -50,7 +55,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     logger.debug(Routes.route_authorize)
 
     session = Session(request)
-    client_result = _client_or_raise(request)
+    client_result = _client_or_error(request, hooks)
 
     if hasattr(client_result, "authorize_access_token"):
         # this looks like an oauth_client since it has the method we need
@@ -75,7 +80,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_access_token returned None")
 
     if exception:
-        raise exception
+        return hooks.system_error(request, exception)
 
     hooks.post_authorize(request)
     logger.debug("Access token authorized")
@@ -122,14 +127,14 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)
 
-    oauth_client_result = _client_or_raise(request)
+    client_result = _client_or_error(request, hooks)
 
-    if hasattr(oauth_client_result, "authorize_redirect"):
+    if hasattr(client_result, "authorize_redirect"):
         # this looks like an oauth_client since it has the method we need
-        oauth_client = oauth_client_result
+        oauth_client = client_result
     else:
         # this does not look like an oauth_client, it's an error redirect
-        return oauth_client_result
+        return client_result
 
     route = reverse(Routes.route_authorize)
     redirect_uri = _generate_redirect_uri(request, route)
@@ -151,7 +156,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_redirect returned None")
 
     if exception:
-        raise exception
+        return hooks.system_error(request, exception)
 
     response = hooks.post_login(request, response)
 
@@ -162,14 +167,14 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     """View handler for OIDC sign out with the CDT Identity Gateway."""
     logger.debug(Routes.route_logout)
 
-    oauth_client_result = _client_or_raise(request)
+    client_result = _client_or_error(request, hooks)
 
-    if hasattr(oauth_client_result, "load_server_metadata"):
+    if hasattr(client_result, "load_server_metadata"):
         # this looks like an oauth_client since it has the method we need
-        oauth_client = oauth_client_result
+        oauth_client = client_result
     else:
         # this does not look like an oauth_client, it's an error redirect
-        return oauth_client_result
+        return client_result
 
     hooks.pre_logout(request)
 
@@ -183,9 +188,13 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     # The implementation here was adapted from the same ticket: https://github.com/lepture/authlib/issues/331#issue-838728145
     #
     # Send the user through the end_session_endpoint, redirecting back to the post_logout URI
-    metadata = oauth_client.load_server_metadata()
-    end_session_endpoint = metadata.get("end_session_endpoint")
+    metadata = {}
+    try:
+        metadata = oauth_client.load_server_metadata()
+    except Exception as exception:
+        return hooks.system_error(request, exception)
 
+    end_session_endpoint = metadata.get("end_session_endpoint")
     params = dict(client_id=oauth_client.client_id, post_logout_redirect_uri=post_logout_uri)
     encoded_params = urlencode(params)
     end_session_url = f"{end_session_endpoint}?{encoded_params}"

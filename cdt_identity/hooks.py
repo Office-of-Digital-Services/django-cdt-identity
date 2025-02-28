@@ -1,7 +1,7 @@
 import functools
 import logging
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseServerError
 
 from cdt_identity import claims, models
 
@@ -210,3 +210,23 @@ class DefaultHooks:
             response (HttpResponse): The potentially modified response.
         """
         return response
+
+    @classmethod
+    @log_hook_call
+    def system_error(cls, request: HttpRequest, exception: Exception) -> HttpResponse:
+        """Hook method that runs when an exception occurs.
+
+        Default behavior:
+        - An `HttpResponseServerError` is generated, indicating an system error occurred.
+
+        Consumers can override this method to execute custom logic to handle system errors.
+
+        Args:
+            request (HttpRequest): The Django request object.
+            exception (Exception): The exception that was raised.
+
+        Returns:
+            response (HttpResponse): An appropriate response to the exception being raised.
+        """
+        logger.error("A system error occurred.", exc_info=exception)
+        return HttpResponseServerError("A system error occurred.")
