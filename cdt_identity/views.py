@@ -118,9 +118,7 @@ def cancel(request, hooks=DefaultHooks):
     else:
         response = HttpResponse("Login was cancelled", content_type="text/plain")
 
-    response = hooks.cancel_login(request, response)
-
-    return response
+    return hooks.cancel_login(request, response)
 
 
 def login(request: HttpRequest, hooks=DefaultHooks):
@@ -158,9 +156,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     if exception:
         return hooks.system_error(request, exception)
 
-    response = hooks.post_login(request, response)
-
-    return response
+    return hooks.post_login(request, response)
 
 
 def logout(request: HttpRequest, hooks=DefaultHooks):
@@ -213,6 +209,4 @@ def post_logout(request: HttpRequest, hooks=DefaultHooks):
     else:
         response = HttpResponse("Logout complete", content_type="text/plain")
 
-    response = hooks.post_logout(request, response)
-
-    return response
+    return hooks.post_logout(request, response)
