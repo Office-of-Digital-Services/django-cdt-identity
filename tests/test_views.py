@@ -66,23 +66,20 @@ def make_claims_response():
 
 
 @pytest.mark.django_db
-def test_client_or_error_no_config(mock_request, mock_create_client):
-    response = _client_or_error(mock_request)
+def test_client_or_error_no_config(mock_request, mock_create_client, mock_hooks):
+    _client_or_error(mock_request, mock_hooks)
 
     mock_create_client.assert_not_called()
-    assert response.status_code == 500
-    assert response.content.decode() == "A system error occurred."
+    mock_hooks.system_error.assert_called_once()
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("mock_session")
-def test_client_or_error_no_client(mock_create_client, mock_request):
+def test_client_or_error_no_client(mock_request, mock_create_client, mock_hooks):
     mock_create_client.return_value = None
 
-    response = _client_or_error(mock_request)
+    _client_or_error(mock_request, mock_hooks)
 
-    assert response.status_code == 500
-    assert response.content.decode() == "A system error occurred."
+    mock_hooks.system_error.assert_called_once()
 
 
 @pytest.mark.django_db
