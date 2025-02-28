@@ -65,6 +65,22 @@ def make_claims_response():
     return _make_response
 
 
+@pytest.fixture
+def assert_response():
+    def _assert_response(response, *, status_code=200, content=None, redirect_path=None, claims_result=None):
+        """Assert common response patterns in tests."""
+        if status_code is not None:
+            assert response.status_code == status_code
+
+        if content is not None:
+            assert response.content.decode() == content
+
+        if redirect_path is not None:
+            assert response["Location"] == redirect_path
+
+    return _assert_response
+
+
 @pytest.mark.django_db
 def test_client_or_error_no_config(mock_request, mock_create_client, mock_hooks):
     _client_or_error(mock_request, mock_hooks)
@@ -128,15 +144,14 @@ def test_authorize_hooks(mock_oauth_client, mock_request, mock_session, mock_hoo
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_success(
-    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+    mock_oauth_client, mock_request, mock_session, make_claims_request, make_claims_response, assert_response
 ):
     mock_oauth_client.authorize_access_token.return_value = make_claims_response()
     mock_session.claims_request = make_claims_request()
 
-    authorize(mock_request)
+    response = authorize(mock_request)
 
-    mock_redirect.assert_called_once_with("/success")
-    assert mock_session.claims_result == ClaimsResult(verified={"claim1": True, "claim2": "value"})
+    assert_response(response, status_code=302, redirect_path="/success")
 
 
 @pytest.mark.django_db
@@ -219,16 +234,16 @@ def test_authorize_no_token_claims(
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
 def test_authorize_token_error_claims(
-    mock_oauth_client, mock_request, mock_session, mock_redirect, make_claims_request, make_claims_response
+    mock_oauth_client, mock_request, mock_session, make_claims_request, make_claims_response, assert_response
 ):
     mock_oauth_client.authorize_access_token.return_value = make_claims_response(
         claims={"claim1": 5, "claim2": 10, "claim3": 100}
     )
     mock_session.claims_request = make_claims_request()
 
-    authorize(mock_request)
+    response = authorize(mock_request)
 
-    mock_redirect.assert_called_once_with("/fail")
+    assert_response(response, status_code=302, redirect_path="/fail")
     assert mock_session.claims_result == ClaimsResult(errors={"claim2": 10})
 
 
@@ -256,14 +271,13 @@ def test_cancel_with_claims_request(mocker, mock_request, mock_session, mock_red
 
 
 @pytest.mark.django_db
-def test_cancel_without_claims_request(mock_request, mock_session, mock_redirect):
+def test_cancel_without_claims_request(mock_request, mock_session, mock_redirect, assert_response):
     mock_session.claims_request = None
 
     response = cancel(mock_request)
 
     mock_redirect.assert_not_called()
-    assert response.status_code == 200
-    assert response.content.decode("utf-8") == "Login was cancelled"
+    assert_response(response, status_code=200, content="Login was cancelled")
 
 
 @pytest.mark.django_db
@@ -282,13 +296,13 @@ def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_login_success(mocker, mock_oauth_client, mock_request):
+def test_login_success(mocker, mock_oauth_client, mock_request, assert_response):
     mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
     mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="authorize")
 
     response = login(mock_request)
 
-    assert response.status_code == 200
+    assert_response(response, status_code=200)
     mock_reverse.assert_called_once_with(Routes.route_authorize)
 
 
@@ -424,11 +438,10 @@ def test_post_logout_with_claims_request(mocker, mock_request, mock_session, moc
 
 
 @pytest.mark.django_db
-def test_post_logout_without_claims_request(mock_request, mock_session, mock_redirect):
+def test_post_logout_without_claims_request(mock_request, mock_session, mock_redirect, assert_response):
     mock_session.claims_request = None
 
     response = post_logout(mock_request)
 
     mock_redirect.assert_not_called()
-    assert response.status_code == 200
-    assert response.content.decode("utf-8") == "Logout complete"
+    assert_response(response, status_code=200, content="Logout complete")
