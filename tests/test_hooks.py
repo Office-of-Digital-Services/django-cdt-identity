@@ -44,7 +44,7 @@ def test_text_response():
         (DefaultHooks.claims_verified_eligible, (HttpRequest(), ClaimsVerificationRequest(), ClaimsResult())),
         (DefaultHooks.claims_verified_not_eligible, (HttpRequest(), ClaimsVerificationRequest(), ClaimsResult())),
         (DefaultHooks.pre_logout, (HttpRequest(),)),
-        (DefaultHooks.post_logout, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.post_logout, (HttpRequest(),)),
         (DefaultHooks.system_error, (HttpRequest(), Exception())),
     ],
 )
@@ -86,12 +86,12 @@ def test_claims_verified_not_eligible(assert_response):
     assert_response(response, status_code=200, content="Claims were not verified for eligibility.")
 
 
-def test_post_logout():
-    request, response = HttpRequest(), HttpResponse()
+def test_post_logout(assert_response):
+    request = HttpRequest()
 
-    result = DefaultHooks.post_logout(request, response)
+    response = DefaultHooks.post_logout(request)
 
-    assert result == response
+    assert_response(response, status_code=200, content="Logout complete.")
 
 
 def test_system_error(caplog, assert_response):

@@ -224,22 +224,21 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_logout(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def post_logout(cls, request: HttpRequest) -> HttpResponse:
         """Hook method that runs when logout with the Identity Gateway is complete.
 
         Default behavior:
-        - No operation is performed; returns the HttpResponse unchanged.
+        - An `HttpResponse` is generated, indicating logout was successful.
 
-        Consumers can override this method to execute custom logic on completion.
+        Consumers can override this method to execute custom logic on logout completion.
 
         Args:
             request (HttpRequest): The Django request object.
-            response (HttpResponse): The HttpResponse produced by the post_logout view.
 
         Returns:
-            response (HttpResponse): The potentially modified response.
+            response (HttpResponse): An appropriate response to logout completion.
         """
-        return response
+        return text_response("Logout complete.")
 
     @classmethod
     @log_hook_call

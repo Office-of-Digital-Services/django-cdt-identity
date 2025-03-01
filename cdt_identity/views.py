@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -195,11 +195,4 @@ def post_logout(request: HttpRequest, hooks=DefaultHooks):
     """View implementing logout completion."""
     logger.debug(Routes.route_post_logout)
 
-    session = Session(request)
-
-    if session.claims_request and session.claims_request.redirect_post_logout:
-        response = redirect(session.claims_request.redirect_post_logout)
-    else:
-        response = HttpResponse("Logout complete", content_type="text/plain")
-
-    return hooks.post_logout(request, response)
+    return hooks.post_logout(request)

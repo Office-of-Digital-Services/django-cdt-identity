@@ -316,33 +316,8 @@ def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
-def test_post_logout_hooks(mock_request, mock_hooks, mock_redirect):
-    mock_redirect_response = HttpResponse("redirect")
-    mock_redirect.return_value = mock_redirect_response
+def test_post_logout(mock_request, mock_hooks):
+    response = post_logout(mock_request, mock_hooks)
 
-    post_logout(mock_request, mock_hooks)
-
-    mock_hooks.post_logout.assert_called_once_with(mock_request, mock_redirect_response)
-
-
-@pytest.mark.django_db
-def test_post_logout_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
-    mock_session.claims_request = mocker.Mock(redirect_post_logout="/done")
-    mock_redirect_response = HttpResponse("redirect")
-    mock_redirect.return_value = mock_redirect_response
-
-    response = post_logout(mock_request)
-
-    mock_redirect.assert_called_once_with("/done")
-    assert response == mock_redirect_response
-
-
-@pytest.mark.django_db
-def test_post_logout_without_claims_request(mock_request, mock_session, mock_redirect):
-    mock_session.claims_request = None
-
-    response = post_logout(mock_request)
-
-    mock_redirect.assert_not_called()
-    assert response.status_code == 200
-    assert response.content.decode("utf-8") == "Logout complete"
+    mock_hooks.post_logout.assert_called_once_with(mock_request)
+    assert response == mock_hooks.post_logout.return_value
