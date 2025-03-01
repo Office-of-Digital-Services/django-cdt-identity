@@ -12,4 +12,3 @@ exclude MANIFEST.in
 
 include LICENSE
 include README.md
-recursive-include *.html
