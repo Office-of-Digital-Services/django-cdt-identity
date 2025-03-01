@@ -36,7 +36,7 @@ def test_text_response():
     "hook_func,args",
     [
         (DefaultHooks.pre_login, (HttpRequest(),)),
-        (DefaultHooks.post_login, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.post_login, (HttpRequest(),)),
         (DefaultHooks.cancel_login, (HttpRequest(),)),
         (DefaultHooks.pre_authorize, (HttpRequest(),)),
         (DefaultHooks.post_authorize, (HttpRequest(),)),
@@ -56,14 +56,6 @@ def test_hook_logging(caplog, hook_func, args):
         hook_func(*args)
 
     assert any(f"{hook_func.__name__} hook called" in record.message for record in caplog.records)
-
-
-def test_post_login():
-    request, response = HttpRequest(), HttpResponse()
-
-    result = DefaultHooks.post_login(request, response)
-
-    assert result == response
 
 
 def test_cancel_login(assert_response):

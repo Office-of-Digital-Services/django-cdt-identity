@@ -74,23 +74,19 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_login(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def post_login(cls, request: HttpRequest) -> None:
         """
         Hook method that runs after a successful login with the Identity Gateway.
 
         Default behavior:
-        - No operation is performed; returns the HttpResponse unchanged.
+        - No operation is performed.
 
-        Consumers can override this method to perform additional processing on the response.
+        Consumers can override this method to execute custom logic after login.
 
         Args:
             request (HttpRequest): The Django request object.
-            response (HttpResponse): The HttpResponse produced by the login view.
-
-        Returns:
-            HttpResponse: The potentially modified response.
         """
-        return response
+        pass
 
     @classmethod
     @log_hook_call

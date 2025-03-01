@@ -127,6 +127,8 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         # this does not look like an oauth_client, it's an error redirect
         return client_result
 
+    hooks.pre_login(request)
+
     route = reverse(Routes.route_authorize)
     redirect_uri = _generate_redirect_uri(request, route)
 
@@ -136,7 +138,6 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     response = None
 
     try:
-        hooks.pre_login(request)
         response = oauth_client.authorize_redirect(request, redirect_uri)
     except Exception as ex:
         exception = ex
@@ -149,7 +150,9 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     if exception:
         return hooks.system_error(request, exception)
 
-    return hooks.post_login(request, response)
+    hooks.post_login(request)
+
+    return response
 
 
 def logout(request: HttpRequest, hooks=DefaultHooks):

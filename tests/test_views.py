@@ -182,28 +182,16 @@ def test_cancel(mock_request, mock_hooks):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_login_hooks(mock_oauth_client, mock_request, mock_hooks):
-    response = HttpResponse(status=200)
-    mock_oauth_client.authorize_redirect.return_value = response
-    mock_hooks.post_login.return_value = response
-
-    result = login(mock_request, mock_hooks)
-
-    assert result == response
-    mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.post_login.assert_called_once_with(mock_request, response)
-
-
-@pytest.mark.django_db
-@pytest.mark.usefixtures("mock_client_or_error")
-def test_login_success(mocker, mock_oauth_client, mock_request):
+def test_login_success(mocker, mock_oauth_client, mock_request, mock_hooks):
     mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
     mock_reverse = mocker.patch("cdt_identity.views.reverse", return_value="authorize")
 
-    response = login(mock_request)
+    response = login(mock_request, mock_hooks)
 
     assert response.status_code == 200
     mock_reverse.assert_called_once_with(Routes.route_authorize)
+    mock_hooks.pre_login.assert_called_once_with(mock_request)
+    mock_hooks.post_login.assert_called_once_with(mock_request)
 
 
 @pytest.mark.django_db
@@ -213,7 +201,9 @@ def test_login_failure(mock_oauth_client, mock_request, mock_hooks):
 
     login(mock_request, mock_hooks)
 
+    mock_hooks.pre_login.assert_called_once_with(mock_request)
     mock_hooks.system_error.assert_called_once()
+    mock_hooks.post_login.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -234,7 +224,9 @@ def test_login_authorize_redirect_exception(mock_oauth_client, mock_request, moc
 
     login(mock_request, mock_hooks)
 
+    mock_hooks.pre_login.assert_called_once_with(mock_request)
     mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.post_login.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -252,7 +244,9 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
     login(mock_request, mock_hooks)
 
+    mock_hooks.pre_login.assert_called_once_with(mock_request)
     mock_hooks.system_error.assert_called_once()
+    mock_hooks.post_login.assert_not_called()
 
 
 @pytest.mark.django_db
