@@ -111,14 +111,7 @@ def cancel(request, hooks=DefaultHooks):
     """View implementing login cancellation."""
     logger.debug(Routes.route_cancel)
 
-    session = Session(request)
-
-    if session.claims_request and session.claims_request.redirect_fail:
-        response = redirect(session.claims_request.redirect_fail)
-    else:
-        response = HttpResponse("Login was cancelled", content_type="text/plain")
-
-    return hooks.cancel_login(request, response)
+    return hooks.cancel_login(request)
 
 
 def login(request: HttpRequest, hooks=DefaultHooks):

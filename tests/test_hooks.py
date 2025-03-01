@@ -37,7 +37,7 @@ def test_text_response():
     [
         (DefaultHooks.pre_login, (HttpRequest(),)),
         (DefaultHooks.post_login, (HttpRequest(), HttpResponse())),
-        (DefaultHooks.cancel_login, (HttpRequest(), HttpResponse())),
+        (DefaultHooks.cancel_login, (HttpRequest(),)),
         (DefaultHooks.pre_authorize, (HttpRequest(),)),
         (DefaultHooks.post_authorize, (HttpRequest(),)),
         (DefaultHooks.pre_claims_verification, (HttpRequest(), ClaimsVerificationRequest())),
@@ -66,12 +66,12 @@ def test_post_login():
     assert result == response
 
 
-def test_cancel_login():
-    request, response = HttpRequest(), HttpResponse()
+def test_cancel_login(assert_response):
+    request = HttpRequest()
 
-    result = DefaultHooks.cancel_login(request, response)
+    response = DefaultHooks.cancel_login(request)
 
-    assert result == response
+    assert_response(response, status_code=200, content="Login was cancelled.")
 
 
 def test_claims_verified_eligible(assert_response):

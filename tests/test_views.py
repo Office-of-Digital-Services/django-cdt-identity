@@ -173,36 +173,11 @@ def test_authorize_token_exception(mock_oauth_client, mock_request, mock_hooks):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
-def test_cancel_hooks(mock_request, mock_hooks, mock_redirect):
-    mock_redirect_response = HttpResponse("redirect")
-    mock_redirect.return_value = mock_redirect_response
+def test_cancel(mock_request, mock_hooks):
+    response = cancel(mock_request, mock_hooks)
 
-    cancel(mock_request, mock_hooks)
-
-    mock_hooks.cancel_login.assert_called_once_with(mock_request, mock_redirect_response)
-
-
-@pytest.mark.django_db
-def test_cancel_with_claims_request(mocker, mock_request, mock_session, mock_redirect):
-    mock_session.claims_request = mocker.Mock(redirect_fail="/fail")
-    mock_redirect_response = HttpResponse("redirect")
-    mock_redirect.return_value = mock_redirect_response
-
-    response = cancel(mock_request)
-
-    mock_redirect.assert_called_once_with("/fail")
-    assert response == mock_redirect_response
-
-
-@pytest.mark.django_db
-def test_cancel_without_claims_request(mock_request, mock_session, mock_redirect):
-    mock_session.claims_request = None
-
-    response = cancel(mock_request)
-
-    mock_redirect.assert_not_called()
-    assert response.status_code == 200
-    assert response.content.decode("utf-8") == "Login was cancelled"
+    mock_hooks.cancel_login.assert_called_once_with(mock_request)
+    assert response == mock_hooks.cancel_login.return_value
 
 
 @pytest.mark.django_db
