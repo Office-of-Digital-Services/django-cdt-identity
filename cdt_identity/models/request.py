@@ -1,11 +1,15 @@
+from uuid import uuid4
+
 from django.db import models
 
 
 class ClaimsVerificationRequest(models.Model):
     """Model for Identity Gateway claims verification request."""
 
-    id = models.AutoField(
+    id = models.UUIDField(
         primary_key=True,
+        default=uuid4,
+        editable=False,
     )
     scopes = models.CharField(
         help_text="A space-separated list of identifiers used to specify what information is being requested",

@@ -1,11 +1,15 @@
+from uuid import uuid4
+
 from django.db import models
 
 
 class IdentityGatewayConfig(models.Model):
     """Model for Identity Gateway client configuration."""
 
-    id = models.AutoField(
+    id = models.UUIDField(
         primary_key=True,
+        default=uuid4,
+        editable=False,
     )
     client_name = models.SlugField(
         help_text="The name of this Identity Gateway client",

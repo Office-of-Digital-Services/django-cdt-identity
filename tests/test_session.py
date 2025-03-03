@@ -26,7 +26,7 @@ def client_config():
 
 @pytest.fixture
 def claims_request():
-    request = ClaimsVerificationRequest.objects.create(id=123)
+    request = ClaimsVerificationRequest.objects.create()
     yield request
     request.delete()
 
@@ -65,7 +65,7 @@ def test_client(mock_request, client_config):
     assert session.client_config is None
 
     session.client_config = client_config
-    assert session.session[session._keys_client] == client_config.id
+    assert session.session[session._keys_client] == str(client_config.id)
 
     session.client_config = None
     assert session.session[session._keys_client] is None
@@ -77,7 +77,7 @@ def test_claims_request(mock_request, claims_request):
     assert session.claims_request is None
 
     session.claims_request = claims_request
-    assert session.session[session._keys_request] == claims_request.id
+    assert session.session[session._keys_request] == str(claims_request.id)
 
     session.claims_request = None
     assert session.session[session._keys_request] is None
