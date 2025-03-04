@@ -10,4 +10,4 @@ class IdentityGatewayConfigAdmin(admin.ModelAdmin):
 
 @admin.register(ClaimsVerificationRequest)
 class ClaimsVerificationRequestAdmin(admin.ModelAdmin):
-    list_display = ("scopes", "eligibility_claim", "extra_claims", "scheme", "redirect_fail", "redirect_success")
+    list_display = ("scopes", "eligibility_claim", "extra_claims", "scheme")

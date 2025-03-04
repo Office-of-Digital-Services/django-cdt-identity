@@ -28,6 +28,11 @@ def log_hook_call(hook_func):
     return wrapper
 
 
+def text_response(content: str) -> HttpResponse:
+    """Create an HttpResponse with content_type=text/plain."""
+    return HttpResponse(content, content_type="text/plain")
+
+
 class DefaultHooks:
     """Default hooks implementation.
 
@@ -69,43 +74,38 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_login(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def post_login(cls, request: HttpRequest) -> None:
         """
         Hook method that runs after a successful login with the Identity Gateway.
 
         Default behavior:
-        - No operation is performed; returns the HttpResponse unchanged.
+        - No operation is performed.
 
-        Consumers can override this method to perform additional processing on the response.
+        Consumers can override this method to execute custom logic after login.
 
         Args:
             request (HttpRequest): The Django request object.
-            response (HttpResponse): The HttpResponse produced by the login view.
-
-        Returns:
-            HttpResponse: The potentially modified response.
         """
-        return response
+        pass
 
     @classmethod
     @log_hook_call
-    def cancel_login(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def cancel_login(cls, request: HttpRequest) -> HttpResponse:
         """
         Hook method that runs when login with the Identity Gateway is canceled by the user.
 
         Default behavior:
-        - No operation is performed; returns the HttpResponse unchanged.
+        - Returns a plaintext HttpResponse indicating login cancellation.
 
         Consumers can override this method to execute custom logic on cancel.
 
         Args:
             request (HttpRequest): The Django request object.
-            response (HttpResponse): The HttpResponse produced by the cancel view.
 
         Returns:
-            HttpResponse: The potentially modified response.
+            HttpResponse: The response to login cancellation.
         """
-        return response
+        return text_response("Login was cancelled.")
 
     @classmethod
     @log_hook_call
@@ -158,14 +158,14 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_claims_verification(
+    def claims_verified_eligible(
         cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest, claims_result: claims.ClaimsResult
-    ) -> None:
+    ) -> HttpResponse:
         """
-        Hook method that runs after claims verification of the Identity Gateway's response.
+        Hook method that runs on successful eligibility verification of the Identity Gateway's response.
 
         Default Behavior:
-        - No operation is performed.
+        - An `HttpResponse` is generated, indicating successful eligibility verification.
 
         Consumers can override this method to execute custom logic after claims verification.
 
@@ -173,8 +173,34 @@ class DefaultHooks:
             request (HttpRequest): The incoming Django request object.
             claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
             claims_result (ClaimsResult): The result of claims verification.
+
+        Returns:
+            response (HttpResponse): An appropriate response to eligibility being verified.
         """
-        pass
+        return text_response("Claims were verified for eligibility.")
+
+    @classmethod
+    @log_hook_call
+    def claims_verified_not_eligible(
+        cls, request: HttpRequest, claims_request: models.ClaimsVerificationRequest, claims_result: claims.ClaimsResult
+    ) -> HttpResponse:
+        """
+        Hook method that runs on unsuccessful eligibility verification of the Identity Gateway's response.
+
+        Default Behavior:
+        - An `HttpResponse` is generated, indicating an unsuccessful eligibility verification.
+
+        Consumers can override this method to execute custom logic after claims verification.
+
+        Args:
+            request (HttpRequest): The incoming Django request object.
+            claims_request (ClaimsVerificationRequest): The configuration used for claims verification.
+            claims_result (ClaimsResult): The result of claims verification.
+
+        Returns:
+            response (HttpResponse): An appropriate response to eligibility not being verified.
+        """
+        return text_response("Claims were not verified for eligibility.")
 
     @classmethod
     @log_hook_call
@@ -194,22 +220,21 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def post_logout(cls, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def post_logout(cls, request: HttpRequest) -> HttpResponse:
         """Hook method that runs when logout with the Identity Gateway is complete.
 
         Default behavior:
-        - No operation is performed; returns the HttpResponse unchanged.
+        - An `HttpResponse` is generated, indicating logout was successful.
 
-        Consumers can override this method to execute custom logic on completion.
+        Consumers can override this method to execute custom logic on logout completion.
 
         Args:
             request (HttpRequest): The Django request object.
-            response (HttpResponse): The HttpResponse produced by the post_logout view.
 
         Returns:
-            response (HttpResponse): The potentially modified response.
+            response (HttpResponse): An appropriate response to logout completion.
         """
-        return response
+        return text_response("Logout complete.")
 
     @classmethod
     @log_hook_call

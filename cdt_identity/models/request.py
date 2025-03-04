@@ -1,7 +1,5 @@
 from django.db import models
 
-from cdt_identity.routes import Routes
-
 
 class ClaimsVerificationRequest(models.Model):
     """Model for Identity Gateway claims verification request."""
@@ -27,21 +25,6 @@ class ClaimsVerificationRequest(models.Model):
         blank=True,
         default="",
         help_text="(Optional) The authentication scheme to use instead of that configured by an IdentityGatewayConnection.",
-        max_length=50,
-    )
-    redirect_fail = models.CharField(
-        default=Routes.route_verify_fail,
-        help_text="A Django route in the form of app:endpoint to redirect to after an unsuccessful claims check",
-        max_length=50,
-    )
-    redirect_success = models.CharField(
-        default=Routes.route_verify_success,
-        help_text="A Django route in the form of app:endpoint to redirect to after a successful claims check",
-        max_length=50,
-    )
-    redirect_post_logout = models.CharField(
-        default=Routes.route_post_logout,
-        help_text="A Django route in the form of app:endpoint to redirect to after a successful log out",
         max_length=50,
     )
 

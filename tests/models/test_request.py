@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 import pytest
 
 from cdt_identity.models import ClaimsVerificationRequest
-from cdt_identity.routes import Routes
 
 
 @pytest.fixture
@@ -13,9 +12,6 @@ def config_data():
         "eligibility_claim": "test-claim",
         "extra_claims": "three four five",
         "scheme": "bearer-override",
-        "redirect_fail": "test:fail",
-        "redirect_success": "test:success",
-        "redirect_post_logout": "test:logout",
     }
 
 
@@ -27,9 +23,6 @@ def test_create(config_data):
     assert req.eligibility_claim == config_data["eligibility_claim"]
     assert req.extra_claims == config_data["extra_claims"]
     assert req.scheme == config_data["scheme"]
-    assert req.redirect_fail == config_data["redirect_fail"]
-    assert req.redirect_success == config_data["redirect_success"]
-    assert req.redirect_post_logout == config_data["redirect_post_logout"]
 
 
 @pytest.mark.django_db
@@ -40,9 +33,6 @@ def test_create(config_data):
         ("eligibility_claim", 50),
         ("extra_claims", 200),
         ("scheme", 50),
-        ("redirect_fail", 50),
-        ("redirect_success", 50),
-        ("redirect_post_logout", 50),
     ],
 )
 def test_max_length(config_data, field_name, max_length):
@@ -58,9 +48,6 @@ def test_max_length(config_data, field_name, max_length):
     [
         "scopes",
         "eligibility_claim",
-        "redirect_fail",
-        "redirect_success",
-        "redirect_post_logout",
     ],
 )
 def test_not_blank(config_data, field_name):
@@ -76,9 +63,6 @@ def test_not_blank(config_data, field_name):
     [
         ("extra_claims", ""),
         ("scheme", ""),
-        ("redirect_fail", Routes.route_verify_fail),
-        ("redirect_success", Routes.route_verify_success),
-        ("redirect_post_logout", Routes.route_post_logout),
     ],
 )
 def test_default(config_data, field_name, default):

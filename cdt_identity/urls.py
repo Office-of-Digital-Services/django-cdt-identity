@@ -1,16 +1,11 @@
 from django.urls import path
-from django.views.generic import TemplateView
 
 from . import views
 from .routes import Routes
 
 app_name = "cdt"
 
-endpoints_template = [
-    Routes.verify_fail,
-    Routes.verify_success,
-]
-endpoints_view = [
+endpoints = [
     Routes.authorize,
     Routes.cancel,
     Routes.login,
@@ -20,9 +15,6 @@ endpoints_view = [
 
 urlpatterns = []
 
-for endpoint in endpoints_template:
-    # simple template-only view
-    urlpatterns.append(path(endpoint, TemplateView.as_view(template_name=f"cdt_identity/{endpoint}.html"), name=endpoint))
-for endpoint in endpoints_view:
+for endpoint in endpoints:
     # view functions
     urlpatterns.append(path(endpoint, getattr(views, endpoint), name=endpoint))

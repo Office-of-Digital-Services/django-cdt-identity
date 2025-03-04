@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -93,34 +93,25 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     if claims_request and claims_request.all_claims:
         userinfo = token.get("userinfo", {})
         claims_result = ClaimsParser.parse(userinfo, claims_request.all_claims)
-        session.claims_result = claims_result
-        hooks.post_claims_verification(request, claims_request, claims_result)
+
+    session.claims_result = claims_result
 
     # if we found the eligibility claim
     if claims_request and claims_request.eligibility_claim and claims_request.eligibility_claim in claims_result:
-        return redirect(claims_request.redirect_success)
+        return hooks.claims_verified_eligible(request, claims_request, claims_result)
 
-    # else redirect to failure
+    # else not eligible
     if claims_result.errors:
         logger.error(claims_result.errors)
 
-    return redirect(claims_request.redirect_fail)
+    return hooks.claims_verified_not_eligible(request, claims_request, claims_result)
 
 
 def cancel(request, hooks=DefaultHooks):
     """View implementing login cancellation."""
     logger.debug(Routes.route_cancel)
 
-    session = Session(request)
-
-    if session.claims_request and session.claims_request.redirect_fail:
-        response = redirect(session.claims_request.redirect_fail)
-    else:
-        response = HttpResponse("Login was cancelled", content_type="text/plain")
-
-    response = hooks.cancel_login(request, response)
-
-    return response
+    return hooks.cancel_login(request)
 
 
 def login(request: HttpRequest, hooks=DefaultHooks):
@@ -136,6 +127,8 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         # this does not look like an oauth_client, it's an error redirect
         return client_result
 
+    hooks.pre_login(request)
+
     route = reverse(Routes.route_authorize)
     redirect_uri = _generate_redirect_uri(request, route)
 
@@ -145,7 +138,6 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     response = None
 
     try:
-        hooks.pre_login(request)
         response = oauth_client.authorize_redirect(request, redirect_uri)
     except Exception as ex:
         exception = ex
@@ -158,7 +150,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
     if exception:
         return hooks.system_error(request, exception)
 
-    response = hooks.post_login(request, response)
+    hooks.post_login(request)
 
     return response
 
@@ -206,13 +198,4 @@ def post_logout(request: HttpRequest, hooks=DefaultHooks):
     """View implementing logout completion."""
     logger.debug(Routes.route_post_logout)
 
-    session = Session(request)
-
-    if session.claims_request and session.claims_request.redirect_post_logout:
-        response = redirect(session.claims_request.redirect_post_logout)
-    else:
-        response = HttpResponse("Logout complete", content_type="text/plain")
-
-    response = hooks.post_logout(request, response)
-
-    return response
+    return hooks.post_logout(request)
