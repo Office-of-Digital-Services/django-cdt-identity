@@ -8,6 +8,7 @@ from cdt_identity.models import ClaimsVerificationRequest
 @pytest.fixture
 def config_data():
     return {
+        "system_name": "test-name",
         "scopes": "one two",
         "eligibility_claim": "test-claim",
         "extra_claims": "three four five",
@@ -19,6 +20,7 @@ def config_data():
 def test_create(config_data):
     req = ClaimsVerificationRequest.objects.create(**config_data)
 
+    assert req.system_name == config_data["system_name"]
     assert req.scopes == config_data["scopes"]
     assert req.eligibility_claim == config_data["eligibility_claim"]
     assert req.extra_claims == config_data["extra_claims"]
@@ -29,6 +31,7 @@ def test_create(config_data):
 @pytest.mark.parametrize(
     "field_name,max_length",
     [
+        ("system_name", 50),
         ("scopes", 200),
         ("eligibility_claim", 50),
         ("extra_claims", 200),
@@ -46,6 +49,7 @@ def test_max_length(config_data, field_name, max_length):
 @pytest.mark.parametrize(
     "field_name",
     [
+        "system_name",
         "scopes",
         "eligibility_claim",
     ],
@@ -85,3 +89,9 @@ def test_all_claims(eligibility_claim, extra_claims, expected):
     req = ClaimsVerificationRequest.objects.create(eligibility_claim=eligibility_claim, extra_claims=extra_claims)
 
     assert req.all_claims == expected
+
+
+def test_str(config_data):
+    req = ClaimsVerificationRequest(**config_data)
+
+    assert str(req) == config_data["system_name"]

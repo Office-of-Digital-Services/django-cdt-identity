@@ -31,22 +31,28 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 (
+                    "system_name",
+                    models.SlugField(
+                        help_text="A short label for this request within the configuration system.",
+                    ),
+                ),
+                (
                     "scopes",
                     models.CharField(
-                        help_text="A space-separated list of identifiers used to specify what information is being requested",
+                        help_text="A space-separated list of identifiers used to specify what information is being requested.",
                         max_length=200,
                     ),
                 ),
                 (
                     "eligibility_claim",
-                    models.CharField(help_text="The claim that is used to verify eligibility", max_length=50),
+                    models.CharField(help_text="The claim that is used to verify eligibility.", max_length=50),
                 ),
                 (
                     "extra_claims",
                     models.CharField(
                         blank=True,
                         default="",
-                        help_text="(Optional) A space-separated list of any additional claims",
+                        help_text="(Optional) A space-separated list of any additional claims.",
                         max_length=200,
                     ),
                 ),
