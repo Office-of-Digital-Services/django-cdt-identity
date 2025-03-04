@@ -9,17 +9,17 @@
 | cdt\_identity/apps.py                     |        4 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/claims.py                   |       37 |        0 |       16 |        0 |    100% |           |
 | cdt\_identity/client.py                   |       24 |        0 |        6 |        0 |    100% |           |
-| cdt\_identity/hooks.py                    |       53 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/hooks.py                    |       59 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/migrations/0001\_initial.py |        5 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/migrations/\_\_init\_\_.py  |        0 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models/\_\_init\_\_.py      |        3 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models/config.py            |        9 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/models/request.py           |       15 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/routes.py                   |       17 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/models/request.py           |       11 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/routes.py                   |       13 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/session.py                  |       50 |        0 |       12 |        0 |    100% |           |
-| cdt\_identity/urls.py                     |       12 |        0 |        4 |        0 |    100% |           |
-| cdt\_identity/views.py                    |      126 |        0 |       36 |        0 |    100% |           |
-|                                 **TOTAL** |  **369** |    **2** |   **74** |    **0** | **99%** |           |
+| cdt\_identity/urls.py                     |        8 |        0 |        2 |        0 |    100% |           |
+| cdt\_identity/views.py                    |      115 |        0 |       32 |        0 |    100% |           |
+|                                 **TOTAL** |  **352** |    **2** |   **68** |    **0** | **99%** |           |
 
 
 ## Setup coverage badge
