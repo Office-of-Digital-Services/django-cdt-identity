@@ -48,7 +48,7 @@ class Session:
     @client_config.setter
     def client_config(self, value: IdentityGatewayConfig) -> None:
         if value:
-            self.session[self._keys_client] = value.id
+            self.session[self._keys_client] = str(value.id)
         else:
             self.session[self._keys_client] = None
 
@@ -60,7 +60,7 @@ class Session:
     @claims_request.setter
     def claims_request(self, value: ClaimsVerificationRequest) -> None:
         if value:
-            self.session[self._keys_request] = value.id
+            self.session[self._keys_request] = str(value.id)
         else:
             self.session[self._keys_request] = None
 

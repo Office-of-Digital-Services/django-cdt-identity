@@ -52,7 +52,7 @@ def create_client(oauth_registry: OAuth, config: IdentityGatewayConfig, request:
         logger.debug(f"Registering OAuth client: {config.client_name}")
         client = oauth_registry.register(
             config.client_name,
-            client_id=config.client_id,
+            client_id=str(config.client_id),
             server_metadata_url=_server_metadata_url(config.authority),
             client_kwargs=_client_kwargs(request.scopes),
             authorize_params=_authorize_params(request.scheme or config.scheme),

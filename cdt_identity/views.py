@@ -90,9 +90,9 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     hooks.pre_claims_verification(request, claims_request)
 
     # Process the returned claims
-    if claims_request and claims_request.all_claims:
+    if claims_request and claims_request.claims_list:
         userinfo = token.get("userinfo", {})
-        claims_result = ClaimsParser.parse(userinfo, claims_request.all_claims)
+        claims_result = ClaimsParser.parse(userinfo, claims_request.claims_list)
 
     session.claims_result = claims_result
 

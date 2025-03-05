@@ -91,7 +91,7 @@ def test_authorize_eligible(mocker, mock_oauth_client, mock_request, mock_sessio
         "userinfo": {"claim1": "1", "claim2": "value", "claim3": "value"},
     }
 
-    claims_request = mocker.Mock(all_claims=["claim1", "claim2"], eligibility_claim="claim1")
+    claims_request = mocker.Mock(claims_list=["claim1", "claim2"], eligibility_claim="claim1")
     mock_session.claims_request = claims_request
     expected_result = ClaimsResult(verified={"claim1": True, "claim2": "value"})
 
@@ -108,7 +108,7 @@ def test_authorize_eligible(mocker, mock_oauth_client, mock_request, mock_sessio
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
 @pytest.mark.parametrize(
-    "all_claims,eligibility_claim,userinfo,claims_result",
+    "claims_list,eligibility_claim,userinfo,claims_result",
     [
         ([], None, {"claim1": "1", "claim2": "value", "claim3": "value"}, ClaimsResult()),
         (["claim4"], "claim4", {"claim1": "1", "claim2": "value", "claim3": "value"}, ClaimsResult()),
@@ -117,10 +117,10 @@ def test_authorize_eligible(mocker, mock_oauth_client, mock_request, mock_sessio
     ],
 )
 def test_authorize_not_eligible(
-    mocker, mock_oauth_client, mock_request, mock_session, mock_hooks, all_claims, eligibility_claim, userinfo, claims_result
+    mocker, mock_oauth_client, mock_request, mock_session, mock_hooks, claims_list, eligibility_claim, userinfo, claims_result
 ):
     # build the mock ClaimsVerificationRequest
-    claims_request = mocker.Mock(all_claims=all_claims)
+    claims_request = mocker.Mock(claims_list=claims_list)
     if eligibility_claim:
         claims_request.eligibility_claim = eligibility_claim
     mock_session.claims_request = claims_request

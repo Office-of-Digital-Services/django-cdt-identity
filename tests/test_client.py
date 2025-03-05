@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 
 from cdt_identity.client import _authorize_params, _client_kwargs, _server_metadata_url, create_client
@@ -55,7 +57,7 @@ def test_create_client_registered(mocker, mock_oauth_registry):
 def test_create_client_not_registered(mocker, mock_oauth_registry):
     mock_client = mocker.Mock(spec=IdentityGatewayConfig)
     mock_client.client_name = "client_name_1"
-    mock_client.client_id = "client_id_1"
+    mock_client.client_id = uuid4()
 
     mock_request = mocker.Mock(spec=ClaimsVerificationRequest)
 
@@ -70,7 +72,7 @@ def test_create_client_not_registered(mocker, mock_oauth_registry):
     mock_oauth_registry.create_client.assert_any_call("client_name_1")
     mock_oauth_registry.register.assert_any_call(
         "client_name_1",
-        client_id="client_id_1",
+        client_id=str(mock_client.client_id),
         server_metadata_url="https://metadata.url",
         client_kwargs={"client": "kwargs"},
         authorize_params={"scheme": "test_scheme"},
