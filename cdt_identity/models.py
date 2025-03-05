@@ -38,9 +38,13 @@ class ClaimsVerificationRequest(models.Model):
     )
 
     @property
-    def all_claims(self):
-        claims = (self.eligibility_claim.strip(), self.extra_claims.strip())
-        return " ".join(claims).strip()
+    def claims(self):
+        _claims = (self.eligibility_claim.strip(), self.extra_claims.strip())
+        return " ".join(_claims).strip()
+
+    @property
+    def claims_list(self):
+        return self.claims.split(" ")
 
     def __str__(self):
         return self.system_name

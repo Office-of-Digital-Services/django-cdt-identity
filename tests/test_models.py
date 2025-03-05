@@ -80,10 +80,11 @@ class TestClaimsVerificationRequest:
             ("claim1", "claim2 claim3", "claim1 claim2 claim3"),
         ],
     )
-    def test_all_claims(self, eligibility_claim, extra_claims, expected):
+    def test_claims_props(self, eligibility_claim, extra_claims, expected):
         req = ClaimsVerificationRequest.objects.create(eligibility_claim=eligibility_claim, extra_claims=extra_claims)
 
-        assert req.all_claims == expected
+        assert req.claims == expected
+        assert req.claims_list == expected.split(" ")
 
     def test_str(self, config_data):
         req = ClaimsVerificationRequest(**config_data)
