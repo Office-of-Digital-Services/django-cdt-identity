@@ -4,7 +4,7 @@ from django.http import HttpRequest, HttpResponse
 import pytest
 
 from cdt_identity.claims import ClaimsResult
-from cdt_identity.hooks import log_hook_call, text_response, DefaultHooks
+from cdt_identity.hooks import log_hook_call, text_response, DefaultHooks, Operation
 from cdt_identity.models import ClaimsVerificationRequest
 
 
@@ -45,7 +45,7 @@ def test_text_response():
         (DefaultHooks.claims_verified_not_eligible, (HttpRequest(), ClaimsVerificationRequest(), ClaimsResult())),
         (DefaultHooks.pre_logout, (HttpRequest(),)),
         (DefaultHooks.post_logout, (HttpRequest(),)),
-        (DefaultHooks.system_error, (HttpRequest(), Exception())),
+        (DefaultHooks.system_error, (HttpRequest(), Exception(), "operation")),
     ],
 )
 def test_hook_logging(caplog, hook_func, args):
@@ -87,10 +87,10 @@ def test_post_logout(assert_response):
 
 
 def test_system_error(caplog, assert_response):
-    request, exception = HttpRequest(), Exception("Exception occurred.")
+    request, exception, operation = HttpRequest(), Exception("Exception occurred."), Operation.INIT
 
     with caplog.at_level(logging.ERROR):
-        response = DefaultHooks.system_error(request, exception)
+        response = DefaultHooks.system_error(request, exception, operation)
 
     assert_response(response, status_code=500, content="A system error occurred.")
     assert any("A system error occurred." in record.message for record in caplog.records)

@@ -1,8 +1,9 @@
 import pytest
 from django.http import HttpResponse
+from unittest.mock import ANY
 
 from cdt_identity.claims import ClaimsResult
-from cdt_identity.hooks import DefaultHooks
+from cdt_identity.hooks import DefaultHooks, Operation
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
 from cdt_identity.views import _client_or_error, _generate_redirect_uri, authorize, cancel, login, logout, post_logout
@@ -36,21 +37,25 @@ def mock_redirect(mocker):
 
 
 @pytest.mark.django_db
-def test_client_or_error_no_config(mock_request, mock_create_client):
+def test_client_or_error_no_config(mocker, mock_request, mock_create_client):
+    spy = mocker.spy(DefaultHooks, "system_error")
     response = _client_or_error(mock_request)
 
     mock_create_client.assert_not_called()
+    spy.assert_called_once_with(ANY, ANY, Operation.INIT)
     assert response.status_code == 500
     assert response.content.decode() == "A system error occurred."
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
-def test_client_or_error_no_client(mock_create_client, mock_request):
+def test_client_or_error_no_client(mocker, mock_create_client, mock_request):
+    spy = mocker.spy(DefaultHooks, "system_error")
     mock_create_client.return_value = None
 
     response = _client_or_error(mock_request)
 
+    spy.assert_called_once_with(ANY, ANY, Operation.INIT)
     assert response.status_code == 500
     assert response.content.decode() == "A system error occurred."
 
@@ -157,6 +162,7 @@ def test_authorize_no_token(mock_oauth_client, mock_request, mock_hooks):
     response = authorize(mock_request, mock_hooks)
 
     assert response == mock_hooks.system_error.return_value
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, Operation.AUTHORIZE_ACCESS_TOKEN)
 
 
 @pytest.mark.django_db
@@ -167,7 +173,7 @@ def test_authorize_token_exception(mock_oauth_client, mock_request, mock_hooks):
 
     response = authorize(mock_request, mock_hooks)
 
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, Operation.AUTHORIZE_ACCESS_TOKEN)
     assert response == mock_hooks.system_error.return_value
 
 
@@ -202,7 +208,7 @@ def test_login_failure(mock_oauth_client, mock_request, mock_hooks):
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once()
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, Operation.AUTHORIZE_REDIRECT)
     mock_hooks.post_login.assert_not_called()
 
 
@@ -225,7 +231,7 @@ def test_login_authorize_redirect_exception(mock_oauth_client, mock_request, moc
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, Operation.AUTHORIZE_REDIRECT)
     mock_hooks.post_login.assert_not_called()
 
 
@@ -245,7 +251,7 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once()
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, Operation.AUTHORIZE_REDIRECT)
     mock_hooks.post_login.assert_not_called()
 
 
@@ -305,7 +311,7 @@ def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, 
 
     logout(mock_request, mock_hooks)
 
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, Operation.LOAD_SERVER_METADATA)
 
 
 @pytest.mark.django_db
