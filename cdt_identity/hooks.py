@@ -1,4 +1,5 @@
 import functools
+from enum import StrEnum, auto
 import logging
 
 from django.http import HttpRequest, HttpResponse, HttpResponseServerError
@@ -7,6 +8,13 @@ from cdt_identity import claims, models
 
 
 logger = logging.getLogger(__name__)
+
+
+class Operation(StrEnum):
+    INIT = auto()
+    AUTHORIZE_REDIRECT = auto()
+    AUTHORIZE_ACCESS_TOKEN = auto()
+    LOAD_SERVER_METADATA = auto()
 
 
 def log_hook_call(hook_func):
@@ -238,7 +246,7 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def system_error(cls, request: HttpRequest, exception: Exception, operation: str) -> HttpResponse:
+    def system_error(cls, request: HttpRequest, exception: Exception, operation: Operation) -> HttpResponse:
         """Hook method that runs when an exception occurs.
 
         Default behavior:
@@ -249,7 +257,7 @@ class DefaultHooks:
         Args:
             request (HttpRequest): The Django request object.
             exception (Exception): The exception that was raised.
-            operation (str): The operation that was being attempted when the error occurred.
+            operation (Operation): The operation that was being attempted when the error occurred.
 
         Returns:
             response (HttpResponse): An appropriate response to the exception being raised.

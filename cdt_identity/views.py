@@ -7,7 +7,7 @@ from django.utils.http import urlencode
 
 from .claims import ClaimsParser, ClaimsResult
 from .client import create_client, oauth as registry
-from .hooks import DefaultHooks
+from .hooks import DefaultHooks, Operation
 from .routes import Routes
 from .session import Session
 
@@ -34,7 +34,7 @@ def _client_or_error(request: HttpRequest, hooks=DefaultHooks):
             exception = Exception(f"Client not registered: {config.client_name}")
 
     if exception:
-        return hooks.system_error(request, exception, "init")
+        return hooks.system_error(request, exception, Operation.INIT)
     else:
         return client
 
@@ -80,7 +80,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_access_token returned None")
 
     if exception:
-        return hooks.system_error(request, exception, "authorize_access_token")
+        return hooks.system_error(request, exception, Operation.AUTHORIZE_ACCESS_TOKEN)
 
     hooks.post_authorize(request)
     logger.debug("Access token authorized")
@@ -148,7 +148,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_redirect returned None")
 
     if exception:
-        return hooks.system_error(request, exception, "authorize_redirect")
+        return hooks.system_error(request, exception, Operation.AUTHORIZE_REDIRECT)
 
     hooks.post_login(request)
 
@@ -184,7 +184,7 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     try:
         metadata = oauth_client.load_server_metadata()
     except Exception as exception:
-        return hooks.system_error(request, exception, "load_server_metadata")
+        return hooks.system_error(request, exception, Operation.LOAD_SERVER_METADATA)
 
     end_session_endpoint = metadata.get("end_session_endpoint")
     params = dict(client_id=oauth_client.client_id, post_logout_redirect_uri=post_logout_uri)
