@@ -1,5 +1,6 @@
 import pytest
 from django.http import HttpResponse
+from unittest.mock import ANY
 
 from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks
@@ -36,21 +37,25 @@ def mock_redirect(mocker):
 
 
 @pytest.mark.django_db
-def test_client_or_error_no_config(mock_request, mock_create_client):
+def test_client_or_error_no_config(mocker, mock_request, mock_create_client):
+    spy = mocker.spy(DefaultHooks, "system_error")
     response = _client_or_error(mock_request)
 
     mock_create_client.assert_not_called()
+    spy.assert_called_once_with(ANY, ANY, "init")
     assert response.status_code == 500
     assert response.content.decode() == "A system error occurred."
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_session")
-def test_client_or_error_no_client(mock_create_client, mock_request):
+def test_client_or_error_no_client(mocker, mock_create_client, mock_request):
+    spy = mocker.spy(DefaultHooks, "system_error")
     mock_create_client.return_value = None
 
     response = _client_or_error(mock_request)
 
+    spy.assert_called_once_with(ANY, ANY, "init")
     assert response.status_code == 500
     assert response.content.decode() == "A system error occurred."
 
