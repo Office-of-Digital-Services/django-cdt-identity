@@ -34,7 +34,7 @@ def _client_or_error(request: HttpRequest, hooks=DefaultHooks):
             exception = Exception(f"Client not registered: {config.client_name}")
 
     if exception:
-        return hooks.system_error(request, exception)
+        return hooks.system_error(request, exception, "init")
     else:
         return client
 
@@ -80,7 +80,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_access_token returned None")
 
     if exception:
-        return hooks.system_error(request, exception)
+        return hooks.system_error(request, exception, "authorize_access_token")
 
     hooks.post_authorize(request)
     logger.debug("Access token authorized")
@@ -148,7 +148,7 @@ def login(request: HttpRequest, hooks=DefaultHooks):
         exception = Exception("authorize_redirect returned None")
 
     if exception:
-        return hooks.system_error(request, exception)
+        return hooks.system_error(request, exception, "authorize_redirect")
 
     hooks.post_login(request)
 
@@ -184,7 +184,7 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
     try:
         metadata = oauth_client.load_server_metadata()
     except Exception as exception:
-        return hooks.system_error(request, exception)
+        return hooks.system_error(request, exception, "load_server_metadata")
 
     end_session_endpoint = metadata.get("end_session_endpoint")
     params = dict(client_id=oauth_client.client_id, post_logout_redirect_uri=post_logout_uri)

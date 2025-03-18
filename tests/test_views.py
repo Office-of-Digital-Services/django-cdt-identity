@@ -167,7 +167,7 @@ def test_authorize_token_exception(mock_oauth_client, mock_request, mock_hooks):
 
     response = authorize(mock_request, mock_hooks)
 
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, "authorize_access_token")
     assert response == mock_hooks.system_error.return_value
 
 
@@ -225,7 +225,7 @@ def test_login_authorize_redirect_exception(mock_oauth_client, mock_request, moc
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, "authorize_redirect")
     mock_hooks.post_login.assert_not_called()
 
 
@@ -305,7 +305,7 @@ def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, 
 
     logout(mock_request, mock_hooks)
 
-    mock_hooks.system_error.assert_called_once_with(mock_request, exception)
+    mock_hooks.system_error.assert_called_once_with(mock_request, exception, "load_server_metadata")
 
 
 @pytest.mark.django_db

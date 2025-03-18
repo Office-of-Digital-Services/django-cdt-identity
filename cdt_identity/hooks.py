@@ -238,7 +238,7 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
-    def system_error(cls, request: HttpRequest, exception: Exception) -> HttpResponse:
+    def system_error(cls, request: HttpRequest, exception: Exception, operation: str) -> HttpResponse:
         """Hook method that runs when an exception occurs.
 
         Default behavior:
@@ -249,6 +249,7 @@ class DefaultHooks:
         Args:
             request (HttpRequest): The Django request object.
             exception (Exception): The exception that was raised.
+            operation (str): The operation that was being attempted when the error occurred.
 
         Returns:
             response (HttpResponse): An appropriate response to the exception being raised.
