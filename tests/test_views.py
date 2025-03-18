@@ -162,6 +162,7 @@ def test_authorize_no_token(mock_oauth_client, mock_request, mock_hooks):
     response = authorize(mock_request, mock_hooks)
 
     assert response == mock_hooks.system_error.return_value
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, "authorize_access_token")
 
 
 @pytest.mark.django_db
@@ -207,7 +208,7 @@ def test_login_failure(mock_oauth_client, mock_request, mock_hooks):
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once()
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, "authorize_redirect")
     mock_hooks.post_login.assert_not_called()
 
 
@@ -250,7 +251,7 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
     login(mock_request, mock_hooks)
 
     mock_hooks.pre_login.assert_called_once_with(mock_request)
-    mock_hooks.system_error.assert_called_once()
+    mock_hooks.system_error.assert_called_once_with(ANY, ANY, "authorize_redirect")
     mock_hooks.post_login.assert_not_called()
 
 
