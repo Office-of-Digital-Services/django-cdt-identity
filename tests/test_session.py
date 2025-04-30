@@ -89,3 +89,26 @@ def test_has_verified_claims(mock_request, claims_result):
 
     session.claims_result = ClaimsResult()
     assert not session.has_verified_claims()
+
+
+@pytest.mark.django_db
+def test_has_verified_eligibility_True(mock_request, claims_request):
+    claims_request.eligibility_claim = "claim"
+    claims_request.save()
+    result = ClaimsResult(verified={"claim": True})
+
+    assert Session(mock_request, claims_request=claims_request, claims_result=result).has_verified_eligibility()
+
+
+@pytest.mark.django_db
+def test_has_verified_eligibility_False(mock_request, claims_request, claims_result):
+    # default session
+    assert not Session(mock_request).has_verified_eligibility()
+
+    # None request
+    assert not Session(mock_request, claims_result=claims_result).has_verified_eligibility()
+
+    # None result
+    claims_request.eligibility_claim = "claim"
+    claims_request.save()
+    assert not Session(mock_request, claims_request=claims_request).has_verified_eligibility()
