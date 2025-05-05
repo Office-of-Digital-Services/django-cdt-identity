@@ -14,10 +14,10 @@
 | cdt\_identity/migrations/\_\_init\_\_.py  |        0 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models.py                   |       26 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/routes.py                   |       13 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/session.py                  |       50 |        0 |       12 |        0 |    100% |           |
+| cdt\_identity/session.py                  |       55 |        0 |       12 |        0 |    100% |           |
 | cdt\_identity/urls.py                     |        8 |        0 |        2 |        0 |    100% |           |
 | cdt\_identity/views.py                    |      115 |        0 |       32 |        0 |    100% |           |
-|                                 **TOTAL** |  **362** |    **2** |   **68** |    **0** | **99%** |           |
+|                                 **TOTAL** |  **367** |    **2** |   **68** |    **0** | **99%** |           |
 
 
 ## Setup coverage badge
