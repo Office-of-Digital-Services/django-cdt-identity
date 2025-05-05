@@ -74,5 +74,12 @@ class Session:
         self.session[self._keys_result] = asdict(value)
 
     def has_verified_claims(self):
-        """Return True if this session has verified claims. False otherwise."""
+        """Return True if this session has any verified claims. False otherwise."""
         return bool(self.claims_result) and bool(self.claims_result.verified)
+
+    def has_verified_eligibility(self):
+        """Return True if this session has the verified eligibility claim. False otherwise."""
+        try:
+            return self.has_verified_claims() and self.claims_request.eligibility_claim in self.claims_result
+        except Exception:
+            return False
