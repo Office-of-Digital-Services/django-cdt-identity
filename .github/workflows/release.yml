@@ -71,7 +71,7 @@ jobs:
         id: summary
         env:
           VERSION: ${{ steps.package.outputs.VERSION }}
-          PACKAGE: ${{ steps.package.outputs.VERSION }}
+          PACKAGE: ${{ steps.package.outputs.PACKAGE }}
           PYPI: ${{ !contains(github.ref, '-rc') && steps.package.outputs.PYPI || steps.package.outputs.TEST_PYPI }}
         run: |
           url="$PYPI/$PACKAGE/$VERSION"
