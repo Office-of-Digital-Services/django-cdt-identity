@@ -22,6 +22,9 @@ jobs:
     permissions:
       # https://github.com/softprops/action-gh-release#permissions
       contents: write
+      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      # https://docs.pypi.org/trusted-publishers/using-a-publisher/
+      id-token: write
 
     steps:
       - name: Checkout
@@ -39,12 +42,37 @@ jobs:
       - name: Build package
         run: python -m build
 
+      - name: Publish to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ contains(github.ref, '-rc') }}
+        with:
+          repository_url: https://test.pypi.org/legacy/
+          print_hash: true
+          skip_existing: true
+          verbose: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ !contains(github.ref, '-rc') }}
+        with:
+          print_hash: true
+
+      - name: Parse version and output PyPI URL
+        id: version
+        if: ${{ !contains(github.ref, '-rc') }}
+        run: |
+          version=$(git describe)
+          echo "PYPI_RELEASE_URL=https://pypi.org/project/django-cdt-identity/$version" >> "$GITHUB_OUTPUT"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: ${{ !contains(github.ref, '-rc') }}
+        env:
+          PYPI_RELEASE_URL: ${{ steps.version.outputs.PYPI_RELEASE_URL }}
         with:
           files: |
             ./dist/*.tar.gz
             ./dist/*.whl
           prerelease: false
           generate_release_notes: true
+          body: ${{ env.PYPI_RELEASE_URL }}
