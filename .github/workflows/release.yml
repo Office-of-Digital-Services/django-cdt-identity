@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -57,22 +59,34 @@ jobs:
         with:
           print_hash: true
 
-      - name: Parse version and output PyPI URL
-        id: version
-        if: ${{ !contains(github.ref, '-rc') }}
+      - name: Output package info
+        id: package
         run: |
-          version=$(git describe)
-          echo "PYPI_RELEASE_URL=https://pypi.org/project/django-cdt-identity/$version" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$(git describe)" >> "$GITHUB_OUTPUT"
+          echo "PACKAGE=django-cdt-identity" >> "$GITHUB_OUTPUT"
+          echo "PYPI=https://pypi.org/project/" >> "$GITHUB_OUTPUT"
+          echo "TEST_PYPI=https://test.pypi.org/project/" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize package info
+        id: summary
+        env:
+          VERSION: ${{ steps.package.outputs.VERSION }}
+          PACKAGE: ${{ steps.package.outputs.VERSION }}
+          PYPI: ${{ !contains(github.ref, '-rc') && steps.package.outputs.PYPI || steps.package.outputs.TEST_PYPI }}
+        run: |
+          url="$PYPI/$PACKAGE/$VERSION"
+          echo "$url" >> $GITHUB_STEP_SUMMARY
+          echo "PACKAGE_URL=$url" >> "$GITHUB_OUTPUT"
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: ${{ !contains(github.ref, '-rc') }}
         env:
-          PYPI_RELEASE_URL: ${{ steps.version.outputs.PYPI_RELEASE_URL }}
+          PACKAGE_URL: ${{ steps.summary.outputs.PACKAGE_URL }}
         with:
           files: |
             ./dist/*.tar.gz
             ./dist/*.whl
           prerelease: false
           generate_release_notes: true
-          body: ${{ env.PYPI_RELEASE_URL }}
+          body: ${{ env.PACKAGE_URL }}
