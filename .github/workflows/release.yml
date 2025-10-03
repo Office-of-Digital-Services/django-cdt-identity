@@ -65,8 +65,8 @@ jobs:
         run: |
           echo "VERSION=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           echo "PACKAGE=django-cdt-identity" >> "$GITHUB_OUTPUT"
-          echo "PYPI=https://pypi.org/project/" >> "$GITHUB_OUTPUT"
-          echo "TEST_PYPI=https://test.pypi.org/project/" >> "$GITHUB_OUTPUT"
+          echo "PYPI=https://pypi.org/project" >> "$GITHUB_OUTPUT"
+          echo "TEST_PYPI=https://test.pypi.org/project" >> "$GITHUB_OUTPUT"
 
       - name: Summarize package info
         id: summary
