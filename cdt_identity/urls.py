@@ -8,6 +8,7 @@ app_name = "cdt"
 endpoints = [
     Routes.authorize,
     Routes.cancel,
+    Routes.failure_to_proof,
     Routes.login,
     Routes.logout,
     Routes.post_logout,
