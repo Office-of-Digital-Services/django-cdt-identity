@@ -9,15 +9,15 @@
 | cdt\_identity/apps.py                     |        4 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/claims.py                   |       37 |        0 |       16 |        0 |    100% |           |
 | cdt\_identity/client.py                   |       24 |        0 |        6 |        0 |    100% |           |
-| cdt\_identity/hooks.py                    |       65 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/hooks.py                    |       69 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/migrations/0001\_initial.py |        6 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/migrations/\_\_init\_\_.py  |        0 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/models.py                   |       26 |        0 |        0 |        0 |    100% |           |
-| cdt\_identity/routes.py                   |       13 |        0 |        0 |        0 |    100% |           |
+| cdt\_identity/routes.py                   |       15 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/session.py                  |       55 |        0 |       12 |        0 |    100% |           |
 | cdt\_identity/urls.py                     |        8 |        0 |        2 |        0 |    100% |           |
-| cdt\_identity/views.py                    |      115 |        0 |       32 |        0 |    100% |           |
-|                                 **TOTAL** |  **367** |    **2** |   **68** |    **0** | **99%** |           |
+| cdt\_identity/views.py                    |      118 |        0 |       32 |        0 |    100% |           |
+| **TOTAL**                                 |  **376** |    **2** |   **68** |    **0** | **99%** |           |
 
 
 ## Setup coverage badge
