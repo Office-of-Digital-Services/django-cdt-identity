@@ -114,6 +114,13 @@ def cancel(request, hooks=DefaultHooks):
     return hooks.cancel_login(request)
 
 
+def failure_to_proof(request: HttpRequest, hooks=DefaultHooks):
+    """View implementing failure to proof."""
+    logger.debug(Routes.route_failure_to_proof)
+
+    return hooks.failure_to_proof(request)
+
+
 def login(request: HttpRequest, hooks=DefaultHooks):
     """View implementing OIDC authorize_redirect with the CDT Identity Gateway."""
     logger.debug(Routes.route_login)

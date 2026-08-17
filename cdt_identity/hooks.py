@@ -117,6 +117,25 @@ class DefaultHooks:
 
     @classmethod
     @log_hook_call
+    def failure_to_proof(cls, request: HttpRequest) -> HttpResponse:
+        """
+        Hook method that runs when the user fails to prove their identity to the identity provider.
+
+        Default behavior:
+        - Returns a plaintext HttpResponse indicating failure to proof.
+
+        Consumers should override this method to present information to the user on alternative means of identity verification.
+
+        Args:
+            request (HttpRequest): The Django request object.
+
+        Returns:
+            HttpResponse: An appropriate response to the failture to proof.
+        """
+        return text_response("Failed to prove identity.")
+
+    @classmethod
+    @log_hook_call
     def pre_authorize(cls, request: HttpRequest) -> None:
         """
         Hook method that runs before attempting token authorization with the Identity Gateway.

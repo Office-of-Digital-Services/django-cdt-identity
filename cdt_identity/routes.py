@@ -4,12 +4,14 @@ class Routes:
 
     authorize = "authorize"
     cancel = "cancel"
+    failure_to_proof = "failure_to_proof"
     login = "login"
     logout = "logout"
     post_logout = "post_logout"
 
     route_authorize = route(authorize)
     route_cancel = route(cancel)
+    route_failure_to_proof = route(failure_to_proof)
     route_login = route(login)
     route_logout = route(logout)
     route_post_logout = route(post_logout)

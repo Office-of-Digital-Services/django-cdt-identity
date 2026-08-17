@@ -66,6 +66,14 @@ def test_cancel_login(assert_response):
     assert_response(response, status_code=200, content="Login was cancelled.")
 
 
+def test_failure_to_proof(assert_response):
+    request = HttpRequest()
+
+    response = DefaultHooks.failure_to_proof(request)
+
+    assert_response(response, status_code=200, content="Failed to prove identity.")
+
+
 def test_claims_verified_eligible(assert_response):
     response = DefaultHooks.claims_verified_eligible(HttpRequest(), ClaimsVerificationRequest(), ClaimsResult())
 

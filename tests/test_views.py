@@ -6,8 +6,16 @@ from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks, Operation
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
-from cdt_identity.views import _client_or_error, _generate_redirect_uri, authorize, cancel, login, logout, post_logout
-
+from cdt_identity.views import (
+    _client_or_error,
+    _generate_redirect_uri,
+    authorize,
+    cancel,
+    failure_to_proof,
+    login,
+    logout,
+    post_logout,
+)
 
 @pytest.fixture
 def mock_session(mocker):
@@ -184,6 +192,15 @@ def test_cancel(mock_request, mock_hooks):
 
     mock_hooks.cancel_login.assert_called_once_with(mock_request)
     assert response == mock_hooks.cancel_login.return_value
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_session")
+def test_failure_to_proof(mock_request, mock_hooks):
+    response = failure_to_proof(mock_request, mock_hooks)
+
+    mock_hooks.failure_to_proof.assert_called_once_with(mock_request)
+    assert response == mock_hooks.failure_to_proof.return_value
 
 
 @pytest.mark.django_db
