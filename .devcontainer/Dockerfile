@@ -30,6 +30,9 @@ COPY .git .git
 COPY cdt_identity cdt_identity
 COPY pyproject.toml pyproject.toml
 
+# ensure pip can run git commands
+RUN git config --global --add safe.directory /home/$USER/src
+
 # install devcontainer requirements
 RUN pip install -e .[dev,test]
 
