@@ -1,6 +1,7 @@
+from unittest.mock import ANY
+
 import pytest
 from django.http import HttpResponse
-from unittest.mock import ANY
 
 from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks, Operation
@@ -16,6 +17,7 @@ from cdt_identity.views import (
     logout,
     post_logout,
 )
+
 
 @pytest.fixture
 def mock_session(mocker):
@@ -281,7 +283,7 @@ def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
 
     logout(mock_request)
 
-    mock_reverse.assert_called_once_with("cdt:post_logout")
+    mock_reverse.assert_called_once_with(Routes.route_post_logout)
     mock_redirect.assert_called_once_with(
         "https://server/endsession?client_id=test-client-id&post_logout_redirect_uri=https%3A%2F%2Ftestserver%2Flogged-out"
     )
