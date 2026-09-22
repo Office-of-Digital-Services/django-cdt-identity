@@ -11,7 +11,7 @@ dependencies = ["Authlib>=1.6.5", "Django>=5.2.7", "requests>=2.32.5"]
 
 [project.optional-dependencies]
 dev = ["black", "djlint", "flake8", "pre-commit", "setuptools_scm>=8"]
-test = ["coverage", "pytest", "pytest-django", "pytest-mock", "pytest-socket"]
+test = ["coverage", "pytest", "pytest-django", "pytest-mock", "pytest-socket", "django-extensions"]
 
 [project.urls]
 Code = "https://github.com/compilerla/django-cdt-identity"

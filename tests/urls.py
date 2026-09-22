@@ -5,4 +5,5 @@ urlpatterns = [
     path("", include("tests.app.urls")),
     path("admin/", admin.site.urls),
     path("oauth/", include("cdt_identity.urls")),
+    path("subapp/", include("tests.subapp.urls")),
 ]
