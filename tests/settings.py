@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "cdt_identity",
     "tests.app",
+    "tests.subapp",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
