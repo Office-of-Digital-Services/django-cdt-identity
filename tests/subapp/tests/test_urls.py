@@ -4,7 +4,38 @@ from django.core.management import call_command
 def test_subapp_urls_registered_properly():
     """Confirm that subapp OAuth URLs are being registered with a nested namespace."""
 
-    assert (
-        "/subapp/\ttests.subapp.urls.index\tsubapp:index\n/subapp/oauth/authorize\tcdt_identity.views.authorize\tsubapp:cdt:authorize\n/subapp/oauth/cancel\tcdt_identity.views.cancel\tsubapp:cdt:cancel\n/subapp/oauth/failure_to_proof\tcdt_identity.views.failure_to_proof\tsubapp:cdt:failure_to_proof\n/subapp/oauth/login\tcdt_identity.views.login\tsubapp:cdt:login\n/subapp/oauth/logout\tcdt_identity.views.logout\tsubapp:cdt:logout\n/subapp/oauth/post_logout\tcdt_identity.views.post_logout\tsubapp:cdt:post_logout"  # noqa: E501
-        in call_command("show_urls")
-    )
+    urls = call_command("show_urls")
+    patterns = [
+        [
+            "/subapp/oauth/authorize",
+            "cdt_identity.views.authorize",
+            "subapp:cdt:authorize",
+        ],
+        [
+            "/subapp/oauth/cancel",
+            "cdt_identity.views.cancel",
+            "subapp:cdt:cancel",
+        ],
+        [
+            "/subapp/oauth/failure_to_proof",
+            "cdt_identity.views.failure_to_proof",
+            "subapp:cdt:failure_to_proof",
+        ],
+        [
+            "/subapp/oauth/login",
+            "cdt_identity.views.login",
+            "subapp:cdt:login",
+        ],
+        [
+            "/subapp/oauth/logout",
+            "cdt_identity.views.logout",
+            "subapp:cdt:logout",
+        ],
+        [
+            "/subapp/oauth/post_logout",
+            "cdt_identity.views.post_logout",
+            "subapp:cdt:post_logout",
+        ],
+    ]
+    for pattern in patterns:
+        assert "\t".join(pattern) in urls
