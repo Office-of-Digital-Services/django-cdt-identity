@@ -3,7 +3,6 @@ from unittest.mock import ANY
 import pytest
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponse
-from django import urls
 from django.urls import resolve
 
 from cdt_identity.claims import ClaimsResult
