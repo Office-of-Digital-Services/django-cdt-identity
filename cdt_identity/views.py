@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from .claims import ClaimsParser, ClaimsResult
-from .client import create_client, oauth as registry
+from .client import create_client
+from .client import oauth as registry
 from .hooks import DefaultHooks, Operation
 from .routes import Routes
 from .session import Session
@@ -136,7 +137,10 @@ def login(request: HttpRequest, hooks=DefaultHooks):
 
     hooks.pre_login(request)
 
-    route = reverse(Routes.route_authorize)
+    # Interpolation of `request.resolver_match.namespace` supports usage in nested URL namespaces.
+    # If we're in a nested namespace scenario, it results in `app:cdt:authorize`;
+    # otherwise, it results in just `cdt:authorize`.
+    route = reverse(f"{request.resolver_match.namespace}:{Routes.authorize}")
     redirect_uri = _generate_redirect_uri(request, route)
 
     logger.debug(f"authorize_redirect with redirect_uri: {redirect_uri}")
@@ -177,7 +181,10 @@ def logout(request: HttpRequest, hooks=DefaultHooks):
 
     hooks.pre_logout(request)
 
-    route = reverse(Routes.route_post_logout)
+    # Interpolation of `request.resolver_match.namespace` supports usage in nested URL namespaces.
+    # If we're in a nested namespace scenario, it results in `app:cdt:post_logout`;
+    # otherwise, it results in just `cdt:post_logout`.
+    route = reverse(f"{request.resolver_match.namespace}:{Routes.post_logout}")
     post_logout_uri = _generate_redirect_uri(request, route)
     logger.debug(f"end_session_endpoint with redirect_uri: {post_logout_uri}")
 
