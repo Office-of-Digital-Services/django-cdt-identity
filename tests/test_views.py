@@ -50,13 +50,14 @@ def mock_redirect(mocker):
 
 
 @pytest.fixture
-def mock_subapp_request(rf):
+def mock_app_request(rf):
     """
-    Creates and initializes a new Django request object similar to a real application request at a URL that belongs to subapp.
+    Creates and initializes a new Django request object similar to a real application request at a URL that belongs to app.
     """
+
     # create a request for a path
-    request = rf.get("/subapp/oauth/login")
-    request.resolver_match = resolve("/subapp/oauth/login")
+    request = rf.get("/app/oauth/login")
+    request.resolver_match = resolve("/app/oauth/login")
 
     # https://stackoverflow.com/a/55530933/358804
     middleware = [SessionMiddleware(lambda x: x)]
@@ -297,14 +298,14 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_subapp_login_reverses_namespaced_authorize_url(mocker, mock_oauth_client, mock_subapp_request, mock_hooks):
+def test_app_login_reverses_namespaced_authorize_url(mocker, mock_oauth_client, mock_app_request, mock_hooks):
     mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
     spy = mocker.spy(views, "reverse")
 
-    login(mock_subapp_request, mock_hooks)
+    login(mock_app_request, mock_hooks)
 
-    spy.assert_called_once_with(f"subapp:{Routes.route_authorize}")
-    assert spy.spy_return == "/subapp/oauth/authorize"
+    spy.assert_called_once_with(f"app:{Routes.route_authorize}")
+    assert spy.spy_return == "/app/oauth/authorize"
 
 
 @pytest.mark.django_db
@@ -368,15 +369,15 @@ def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
-def test_subapp_logout_reverses_namespaced_post_logout_url(mocker, mock_oauth_client, mock_subapp_request, mock_hooks):
+def test_app_logout_reverses_namespaced_post_logout_url(mocker, mock_oauth_client, mock_app_request, mock_hooks):
     mock_oauth_client.client_id = "test-client-id"
     mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
     spy = mocker.spy(views, "reverse")
 
-    logout(mock_subapp_request, mock_hooks)
+    logout(mock_app_request, mock_hooks)
 
-    spy.assert_called_once_with(f"subapp:{Routes.route_post_logout}")
-    assert spy.spy_return == "/subapp/oauth/post_logout"
+    spy.assert_called_once_with(f"app:{Routes.route_post_logout}")
+    assert spy.spy_return == "/app/oauth/post_logout"
 
 
 @pytest.mark.django_db
