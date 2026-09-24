@@ -1,11 +1,15 @@
-import pytest
-from django.http import HttpResponse
 from unittest.mock import ANY
+
+import pytest
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpResponse
+from django.urls import resolve
 
 from cdt_identity.claims import ClaimsResult
 from cdt_identity.hooks import DefaultHooks, Operation
 from cdt_identity.routes import Routes
 from cdt_identity.session import Session
+from cdt_identity import views
 from cdt_identity.views import (
     _client_or_error,
     _generate_redirect_uri,
@@ -16,6 +20,7 @@ from cdt_identity.views import (
     logout,
     post_logout,
 )
+
 
 @pytest.fixture
 def mock_session(mocker):
@@ -42,6 +47,25 @@ def mock_hooks(mocker):
 @pytest.fixture
 def mock_redirect(mocker):
     return mocker.patch("cdt_identity.views.redirect")
+
+
+@pytest.fixture
+def mock_app_request(rf):
+    """
+    Creates and initializes a new Django request object similar to a real application request at a URL that belongs to app.
+    """
+
+    # create a request for a path
+    request = rf.get("/app/oauth/login")
+    request.resolver_match = resolve("/app/oauth/login")
+
+    # https://stackoverflow.com/a/55530933/358804
+    middleware = [SessionMiddleware(lambda x: x)]
+    for m in middleware:
+        m.process_request(request)
+
+    request.session.save()
+    return request
 
 
 @pytest.mark.django_db
@@ -274,6 +298,18 @@ def test_login_authorize_redirect_error_response(mock_oauth_client, mock_request
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("mock_client_or_error")
+def test_app_login_reverses_namespaced_authorize_url(mocker, mock_oauth_client, mock_app_request, mock_hooks):
+    mock_oauth_client.authorize_redirect.return_value = HttpResponse(status=200)
+    spy = mocker.spy(views, "reverse")
+
+    login(mock_app_request, mock_hooks)
+
+    spy.assert_called_once_with(f"app:{Routes.route_authorize}")
+    assert spy.spy_return == "/app/oauth/authorize"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_or_error")
 def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
     mock_oauth_client.client_id = "test-client-id"
     mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
@@ -281,7 +317,7 @@ def test_logout(mocker, mock_oauth_client, mock_request, mock_redirect):
 
     logout(mock_request)
 
-    mock_reverse.assert_called_once_with("cdt:post_logout")
+    mock_reverse.assert_called_once_with(Routes.route_post_logout)
     mock_redirect.assert_called_once_with(
         "https://server/endsession?client_id=test-client-id&post_logout_redirect_uri=https%3A%2F%2Ftestserver%2Flogged-out"
     )
@@ -329,6 +365,19 @@ def test_logout_load_server_metadata_exception(mock_request, mock_oauth_client, 
     logout(mock_request, mock_hooks)
 
     mock_hooks.system_error.assert_called_once_with(mock_request, exception, Operation.LOAD_SERVER_METADATA)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_or_error")
+def test_app_logout_reverses_namespaced_post_logout_url(mocker, mock_oauth_client, mock_app_request, mock_hooks):
+    mock_oauth_client.client_id = "test-client-id"
+    mock_oauth_client.load_server_metadata.return_value = {"end_session_endpoint": "https://server/endsession"}
+    spy = mocker.spy(views, "reverse")
+
+    logout(mock_app_request, mock_hooks)
+
+    spy.assert_called_once_with(f"app:{Routes.route_post_logout}")
+    assert spy.spy_return == "/app/oauth/post_logout"
 
 
 @pytest.mark.django_db
