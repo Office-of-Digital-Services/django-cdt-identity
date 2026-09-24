@@ -16,8 +16,8 @@
 | cdt\_identity/routes.py                   |       15 |        0 |        0 |        0 |    100% |           |
 | cdt\_identity/session.py                  |       55 |        0 |       12 |        0 |    100% |           |
 | cdt\_identity/urls.py                     |        8 |        0 |        2 |        0 |    100% |           |
-| cdt\_identity/views.py                    |      118 |        0 |       32 |        0 |    100% |           |
-| **TOTAL**                                 |  **376** |    **2** |   **68** |    **0** | **99%** |           |
+| cdt\_identity/views.py                    |      119 |        0 |       32 |        0 |    100% |           |
+| **TOTAL**                                 |  **377** |    **2** |   **68** |    **0** | **99%** |           |
 
 
 ## Setup coverage badge
