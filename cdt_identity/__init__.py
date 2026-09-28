@@ -4,7 +4,7 @@ try:
     __version__ = version("django-cdt-identity")
 except PackageNotFoundError:
     # package is not installed
-    __version__ = ""
+    pass
 
 
 VERSION = __version__
