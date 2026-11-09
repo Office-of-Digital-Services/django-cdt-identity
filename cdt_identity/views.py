@@ -98,7 +98,11 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     session.claims_result = claims_result
 
     # if we found the eligibility claim
-    if claims_request and claims_request.eligibility_claim and claims_request.eligibility_claim in claims_result:
+    if (
+        claims_request
+        and type(claims_request.eligibility_claim) is str
+        and all([claim in claims_result for claim in claims_request.eligibility_claim.split(" ")])
+    ):
         return hooks.claims_verified_eligible(request, claims_request, claims_result)
 
     # else not eligible

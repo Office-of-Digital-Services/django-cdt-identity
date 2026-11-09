@@ -21,7 +21,10 @@ class ClaimsVerificationRequest(models.Model):
         max_length=200,
     )
     eligibility_claim = models.CharField(
-        help_text="The claim that is used to verify eligibility.",
+        help_text=(
+            "The claim (or space-separated list of claims) that is used to verify eligibility. "
+            "If multiple claims are entered, all must be returned in order for the overall result to be eligible."
+        ),
         max_length=50,
     )
     extra_claims = models.CharField(
