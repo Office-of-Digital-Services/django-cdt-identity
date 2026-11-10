@@ -9,16 +9,16 @@ logger = logging.getLogger(__name__)
 oauth = OAuth()
 
 
-def _client_kwargs(extra_scopes: str = ""):
+def _client_kwargs(scopes: list[str] = []):
     """
     Generate the OpenID Connect client_kwargs, with optional extra scope(s).
 
-    `extra_scopes` should be a space-separated list of scopes to add.
+    `scopes` should be a list of scope strings to add to "openid", which is always needed.
     """
-    scopes = []
-    if "openid" not in extra_scopes:
-        scopes.append("openid")
-    scopes.append(extra_scopes)
+
+    if "openid" not in scopes:
+        scopes = ["openid"] + scopes
+
     return {"code_challenge_method": "S256", "scope": " ".join(scopes), "prompt": "login"}
 
 
@@ -54,7 +54,7 @@ def create_client(oauth_registry: OAuth, config: IdentityGatewayConfig, request:
             config.client_name,
             client_id=str(config.client_id),
             server_metadata_url=_server_metadata_url(config.authority),
-            client_kwargs=_client_kwargs(request.scopes),
+            client_kwargs=_client_kwargs(request.scopes_list),
             authorize_params=_authorize_params(request.scheme or config.scheme),
         )
 

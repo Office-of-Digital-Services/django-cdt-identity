@@ -47,7 +47,19 @@ class ClaimsVerificationRequest(models.Model):
 
     @property
     def claims_list(self):
-        return self.claims.split(" ")
+        return self.claims.split()
+
+    @property
+    def eligibility_claims_list(self):
+        return self.eligibility_claim.split()
+
+    @property
+    def extra_claims_list(self):
+        return self.extra_claims.split()
+
+    @property
+    def scopes_list(self):
+        return self.scopes.split()
 
     def __str__(self):
         return self.system_name

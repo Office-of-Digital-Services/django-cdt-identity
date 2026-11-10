@@ -73,18 +73,34 @@ class TestClaimsVerificationRequest:
         assert getattr(req, field_name) == default
 
     @pytest.mark.parametrize(
-        "eligibility_claim,extra_claims,expected",
+        "eligibility_claim,extra_claims,expected_claims",
         [
             ("   claim1   ", "", "claim1"),
             ("claim1", "    claim2   ", "claim1 claim2"),
             ("claim1", "claim2 claim3", "claim1 claim2 claim3"),
+            ("claim1 claim2", "claim3", "claim1 claim2 claim3"),
         ],
     )
-    def test_claims_props(self, eligibility_claim, extra_claims, expected):
+    def test_claims_props(self, eligibility_claim, extra_claims, expected_claims):
         req = ClaimsVerificationRequest.objects.create(eligibility_claim=eligibility_claim, extra_claims=extra_claims)
 
-        assert req.claims == expected
-        assert req.claims_list == expected.split(" ")
+        assert req.claims == expected_claims
+        assert req.claims_list == expected_claims.split()
+        assert req.eligibility_claims_list == eligibility_claim.split()
+        assert req.extra_claims_list == extra_claims.split()
+
+    @pytest.mark.parametrize(
+        "scopes",
+        [
+            ("   scope1   "),
+            (" scope1 scope2"),
+            ("scope1  scope2   "),
+        ],
+    )
+    def test_scopes_list(self, scopes):
+        req = ClaimsVerificationRequest.objects.create(scopes=scopes)
+
+        assert req.scopes_list == scopes.split()
 
     def test_str(self, config_data):
         req = ClaimsVerificationRequest(**config_data)
