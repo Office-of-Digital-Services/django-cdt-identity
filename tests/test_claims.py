@@ -34,6 +34,14 @@ from cdt_identity.claims import ClaimsResult, ClaimsParser
             {"claim1": True},
             {},
         ),
+        # valid integer-like values
+        (
+            # we assume for now that Login.gov will always return numbers starting with the + sign
+            {"phone_number": "+19876543210"},
+            ["phone_number"],
+            {"phone_number": "+19876543210"},
+            {},
+        ),
     ],
 )
 def test_ClaimsParser_parse(userinfo, expected_claims, verified_claims, errors):

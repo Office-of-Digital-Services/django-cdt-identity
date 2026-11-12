@@ -38,10 +38,15 @@ class ClaimsParser:
             claim_value = userinfo.get(claim)
             if not claim_value:
                 logger.warning(f"userinfo did not contain claim: {claim}")
-            try:
-                claim_value = int(claim_value)
-            except (TypeError, ValueError):
-                pass
+
+            # convert string responses to integers, where appropriate
+            # values starting with + are probably phone numbers and should remain strings
+            if isinstance(claim_value, str) and not claim_value.startswith("+"):
+                try:
+                    claim_value = int(claim_value)
+                except (TypeError, ValueError):
+                    pass
+
             if isinstance(claim_value, int):
                 if claim_value == 1:
                     # a value of 1 means True
@@ -56,5 +61,7 @@ class ClaimsParser:
                 elif claim_value.lower() != "false":
                     # if userinfo contains claim and the value is not "false", store the value
                     claims[claim] = claim_value
+            else:
+                logger.warning(f"response for claim '{claim}' is not a string or integer")
 
         return ClaimsResult(verified=claims, errors=errors)
