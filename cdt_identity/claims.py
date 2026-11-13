@@ -67,4 +67,4 @@ def check_eligibility(claims_request: ClaimsVerificationRequest, claims_result: 
 
     If claims_request has multiple eligibility claims, the claims_result must include verified claims for each of them.
     """
-    return all([claim in claims_result for claim in claims_request.eligibility_claims_list])
+    return all([claim in claims_result for claim in claims_request.eligibility_claim_list])

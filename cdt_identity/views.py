@@ -98,7 +98,7 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
     session.claims_result = claims_result
 
     # if we found an eligibility claim
-    if claims_request and claims_request.eligibility_claims_list and check_eligibility(claims_request, claims_result):
+    if claims_request and claims_request.eligibility_claim_list and check_eligibility(claims_request, claims_result):
         return hooks.claims_verified_eligible(request, claims_request, claims_result)
 
     # else not eligible

@@ -50,7 +50,7 @@ class ClaimsVerificationRequest(models.Model):
         return self.claims.split()
 
     @property
-    def eligibility_claims_list(self):
+    def eligibility_claim_list(self):
         return self.eligibility_claim.split()
 
     @property

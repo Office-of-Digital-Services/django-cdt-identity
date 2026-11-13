@@ -86,7 +86,7 @@ class TestClaimsVerificationRequest:
 
         assert req.claims == expected_claims
         assert req.claims_list == expected_claims.split()
-        assert req.eligibility_claims_list == eligibility_claim.split()
+        assert req.eligibility_claim_list == eligibility_claim.split()
         assert req.extra_claims_list == extra_claims.split()
 
     @pytest.mark.parametrize(
