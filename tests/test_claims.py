@@ -1,6 +1,14 @@
 import pytest
 
-from cdt_identity.claims import ClaimsResult, ClaimsParser
+from cdt_identity.claims import ClaimsResult, ClaimsParser, check_eligibility
+from cdt_identity.models import ClaimsVerificationRequest
+
+
+@pytest.fixture
+def claims_request():
+    request = ClaimsVerificationRequest.objects.create()
+    yield request
+    request.delete()
 
 
 @pytest.mark.parametrize(
@@ -47,3 +55,39 @@ def test_ClaimsParser_parse(userinfo, expected_claims, verified_claims, errors):
         assert claims[key] == value
         assert claims.get(key) == value
         assert key in claims
+
+
+@pytest.mark.django_db
+def test_check_eligibility_single_claim_True(claims_request):
+    claims_request.eligibility_claim = "claim"
+    claims_request.save()
+    claims_result = ClaimsResult(verified={"claim": True})
+
+    assert check_eligibility(claims_request, claims_result)
+
+
+@pytest.mark.django_db
+def test_check_eligibility_single_claim_False(claims_request):
+    claims_request.eligibility_claim = "claim"
+    claims_request.save()
+    claims_result = ClaimsResult(verified={})
+
+    assert not check_eligibility(claims_request, claims_result)
+
+
+@pytest.mark.django_db
+def test_check_eligibility_multiple_claims_True(claims_request):
+    claims_request.eligibility_claim = "claim claim2"
+    claims_request.save()
+    claims_result = ClaimsResult(verified={"claim": True, "claim2": True})
+
+    assert check_eligibility(claims_request, claims_result)
+
+
+@pytest.mark.django_db
+def test_check_eligibility_multiple_claims_False(claims_request):
+    claims_request.eligibility_claim = "claim claim2"
+    claims_request.save()
+    claims_result = ClaimsResult(verified={"claim": True})
+
+    assert not check_eligibility(claims_request, claims_result)

@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 import logging
 
+from .models import ClaimsVerificationRequest
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,3 +60,11 @@ class ClaimsParser:
                     claims[claim] = claim_value
 
         return ClaimsResult(verified=claims, errors=errors)
+
+
+def check_eligibility(claims_request: ClaimsVerificationRequest, claims_result: ClaimsResult) -> bool:
+    """Determine eligibility given a claims request with eligibility claim(s) and a claims result.
+
+    If claims_request has multiple eligibility claims, the claims_result must include verified claims for each of them.
+    """
+    return all([claim in claims_result for claim in claims_request.eligibility_claim_list])
