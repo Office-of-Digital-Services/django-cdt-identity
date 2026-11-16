@@ -1,11 +1,10 @@
-from dataclasses import asdict
 import logging
+from dataclasses import asdict
 
 from django.http import HttpRequest
 
-from .claims import ClaimsResult
+from .claims import ClaimsResult, check_eligibility
 from .models import ClaimsVerificationRequest, IdentityGatewayConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +79,6 @@ class Session:
     def has_verified_eligibility(self):
         """Return True if this session has the verified eligibility claim. False otherwise."""
         try:
-            return self.has_verified_claims() and self.claims_request.eligibility_claim in self.claims_result
+            return self.has_verified_claims() and check_eligibility(self.claims_request, self.claims_result)
         except Exception:
             return False

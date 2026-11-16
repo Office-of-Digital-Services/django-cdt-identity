@@ -15,7 +15,7 @@ def test_client_kwargs():
 
 
 def test_client_kwargs_scope():
-    kwargs = _client_kwargs("openid scope1")
+    kwargs = _client_kwargs(["openid", "scope1"])
 
     assert "openid" in kwargs["scope"]
     assert "scope1" in kwargs["scope"]

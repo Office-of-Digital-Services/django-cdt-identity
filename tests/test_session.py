@@ -4,7 +4,7 @@ import pytest
 from django.http import HttpRequest
 
 from cdt_identity.claims import ClaimsResult
-from cdt_identity.models import IdentityGatewayConfig, ClaimsVerificationRequest
+from cdt_identity.models import ClaimsVerificationRequest, IdentityGatewayConfig
 from cdt_identity.session import Session
 
 
@@ -112,3 +112,22 @@ def test_has_verified_eligibility_False(mock_request, claims_request, claims_res
     claims_request.eligibility_claim = "claim"
     claims_request.save()
     assert not Session(mock_request, claims_request=claims_request).has_verified_eligibility()
+
+
+@pytest.mark.django_db
+def test_has_verified_eligibility_multiple_claims_True(mock_request, claims_request):
+    claims_request.eligibility_claim = "claim claim2"
+    claims_request.save()
+    result = ClaimsResult(verified={"claim": True, "claim2": True})
+
+    assert Session(mock_request, claims_request=claims_request, claims_result=result).has_verified_eligibility()
+
+
+@pytest.mark.django_db
+def test_has_verified_eligibility_multiple_claims_False(mock_request, claims_request, claims_result):
+    claims_request.eligibility_claim = "claim claim2"
+    claims_request.save()
+
+    # result includes only 1 of 2 claims
+    result = ClaimsResult(verified={"claim": True})
+    assert not Session(mock_request, claims_request=claims_request, claims_result=result).has_verified_eligibility()

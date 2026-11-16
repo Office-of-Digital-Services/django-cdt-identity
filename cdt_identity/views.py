@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from .claims import ClaimsParser, ClaimsResult
+from .claims import ClaimsParser, ClaimsResult, check_eligibility
 from .client import create_client
 from .client import oauth as registry
 from .hooks import DefaultHooks, Operation
@@ -97,8 +97,8 @@ def authorize(request: HttpRequest, hooks=DefaultHooks):
 
     session.claims_result = claims_result
 
-    # if we found the eligibility claim
-    if claims_request and claims_request.eligibility_claim and claims_request.eligibility_claim in claims_result:
+    # if we found an eligibility claim
+    if claims_request and claims_request.eligibility_claim_list and check_eligibility(claims_request, claims_result):
         return hooks.claims_verified_eligible(request, claims_request, claims_result)
 
     # else not eligible
