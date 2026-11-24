@@ -42,6 +42,13 @@ def claims_request():
             {"claim1": True},
             {},
         ),
+        # confirm phone_number is not converted to int
+        (
+            {"phone_number": "+19876543210"},
+            ["phone_number"],
+            {"phone_number": "+19876543210"},
+            {},
+        ),
     ],
 )
 def test_ClaimsParser_parse(userinfo, expected_claims, verified_claims, errors):
