@@ -43,7 +43,7 @@ class ClaimsParser:
 
             # convert string responses to integers, where appropriate
             # skip phone numbers
-            if claim != "phone_number" and isinstance(claim_value, str):
+            if claim != "phone_number":
                 try:
                     claim_value = int(claim_value)
                 except (TypeError, ValueError):
