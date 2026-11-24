@@ -42,8 +42,8 @@ class ClaimsParser:
                 logger.warning(f"userinfo did not contain claim: {claim}")
 
             # convert string responses to integers, where appropriate
-            # values starting with + are probably phone numbers and should remain strings
-            if isinstance(claim_value, str) and not claim_value.startswith("+"):
+            # skip phone numbers
+            if claim != "phone_number" and isinstance(claim_value, str):
                 try:
                     claim_value = int(claim_value)
                 except (TypeError, ValueError):

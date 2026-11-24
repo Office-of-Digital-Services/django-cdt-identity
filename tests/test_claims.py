@@ -42,9 +42,8 @@ def claims_request():
             {"claim1": True},
             {},
         ),
-        # valid integer-like values
+        # confirm phone_number is not converted to int
         (
-            # we assume for now that Login.gov will always return numbers starting with the + sign
             {"phone_number": "+19876543210"},
             ["phone_number"],
             {"phone_number": "+19876543210"},
